@@ -3,742 +3,265 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Miniblocket - Köp & sälj barnsaker</title>
+  <title>Miniblocket</title>
   <style>
-    /* Reset & Base */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: #f0f9ff;
-      color: #1e293b;
-      line-height: 1.6;
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto;background:#f0f9ff;color:#0f172a;line-height:1.5}
+    a{color:inherit}
+
+    :root{
+      --b:#38bdf8;
+      --b2:#2563eb;
+      --slate:#0f172a;
+      --mut:#64748b;
+      --line:#e2e8f0;
+      --soft:#f1f5f9;
+      --soft2:#f8fafc;
+      --good:#10b981;
+      --warn:#f59e0b;
+      --bad:#ef4444;
     }
 
-    /* Layout */
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    .container{max-width:1200px;margin:auto;padding:0 20px}
 
-    /* Navigation */
-    nav {
-      background: white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .nav-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 70px;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .logo-icon {
-      width: 45px;
-      height: 45px;
-      background: linear-gradient(135deg, #38bdf8, #2563eb);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 24px;
-    }
-    .logo-text h1 {
-      font-size: 24px;
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin: 0;
-    }
-    .logo-text p {
-      font-size: 12px;
-      color: #64748b;
-      margin: 0;
-      font-weight: 600;
-    }
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
-      transition: all 0.3s;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #38bdf8, #2563eb);
-      color: white;
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    }
-    .btn-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #f1f5f9;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      color: #64748b;
-      position: relative;
-      transition: all 0.3s;
-    }
-    .btn-icon:hover {
-      background: #e0f2fe;
-      color: #0284c7;
-    }
-    .badge {
-      position: absolute;
-      top: -2px;
-      right: -2px;
-      background: #ef4444;
-      color: white;
-      font-size: 11px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-    .avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #fb923c, #ec4899);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      cursor: pointer;
-    }
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.10)}
+    .nav-content{display:flex;justify-content:space-between;align-items:center;height:70px;gap:10px}
+    .brand{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+    .logo{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(135deg,var(--b),var(--b2));font-size:22px}
+    .brand strong{font-size:18px}
+    .brand small{display:block;font-size:12px;color:var(--mut);font-weight:900;margin-top:2px}
 
-    /* Search & Filter */
-    .search-section {
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
-      margin: 24px 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .search-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-    .search-input-wrapper {
-      flex: 1;
-      min-width: 250px;
-      position: relative;
-    }
-    .search-input-wrapper::before {
-      content: "🔍";
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 18px;
-    }
-    input, select {
-      width: 100%;
-      padding: 12px 16px 12px 48px;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-size: 16px;
-      outline: none;
-      transition: all 0.3s;
-    }
-    input:focus, select:focus {
-      border-color: #38bdf8;
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
-    }
-    select {
-      padding-left: 16px;
-      min-width: 150px;
-      cursor: pointer;
-    }
-    .categories {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-    }
-    .category-btn {
-      padding: 8px 20px;
-      border: 2px solid #e2e8f0;
-      background: white;
-      border-radius: 25px;
-      cursor: pointer;
-      white-space: nowrap;
-      font-weight: 600;
-      color: #475569;
-      transition: all 0.3s;
-    }
-    .category-btn:hover {
-      border-color: #38bdf8;
-      color: #0284c7;
-    }
-    .category-btn.active {
-      background: #e0f2fe;
-      border-color: #38bdf8;
-      color: #0284c7;
+    .nav-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+
+    .btn{padding:10px 16px;border:none;border-radius:999px;cursor:pointer;font-weight:900;font-size:14px;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+    .btn-primary{background:linear-gradient(135deg,var(--b),var(--b2));color:#fff}
+    .btn-primary:hover{filter:saturate(1.1)}
+    .btn-soft{background:var(--soft);color:#334155}
+    .btn-soft:hover{background:#e2e8f0}
+    .btn-danger{background:#fee2e2;color:#991b1b}
+    .btn-danger:hover{background:#fecaca}
+
+    .btn-icon{width:40px;height:40px;border-radius:50%;border:none;background:var(--soft);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#334155;position:relative}
+    .btn-icon:hover{background:#e0f2fe;color:#0369a1}
+    .badge{position:absolute;top:-3px;right:-3px;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:1000;display:flex;align-items:center;justify-content:center}
+
+    .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#fb923c,#ec4899);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:1000;cursor:pointer;user-select:none}
+
+    /* PAGE */
+    .page{padding:22px 0}
+
+    /* SEARCH */
+    .search-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .search-row{display:flex;gap:10px;flex-wrap:wrap}
+    .search-input{flex:1;min-width:240px;position:relative}
+    .search-input::before{content:"🔍";position:absolute;left:14px;top:50%;transform:translateY(-50%)}
+    input,select,textarea{width:100%;padding:12px 14px;border:2px solid var(--line);border-radius:12px;outline:none;font-size:14px;background:#fff}
+    .search-input input{padding-left:42px}
+    input:focus,select:focus,textarea:focus{border-color:var(--b);box-shadow:0 0 0 3px rgba(56,189,248,.12)}
+
+    .cats{display:flex;gap:8px;overflow-x:auto;padding-top:12px}
+    .cat{border:2px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-weight:1000;color:#334155;cursor:pointer;white-space:nowrap}
+    .cat.active{background:#e0f2fe;border-color:var(--b);color:#0369a1}
+
+    /* PRODUCTS */
+    .products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin-top:18px}
+    .product-card{background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;transition:.2s}
+    .product-card:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,.12)}
+    .img-wrap{position:relative}
+    .product-card img{width:100%;height:200px;object-fit:cover;display:block;background:var(--line)}
+    .tag{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);padding:6px 10px;border-radius:999px;font-size:12px;font-weight:1000;color:#334155}
+
+    .fav{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:999px;border:1px solid rgba(226,232,240,.9);background:rgba(255,255,255,.95);box-shadow:0 2px 8px rgba(0,0,0,.12);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:.15s}
+    .fav:hover{transform:scale(1.05)}
+    .fav.active{background:#fee2e2;border-color:#fecaca;color:#ef4444}
+
+    .product-body{padding:14px}
+    .p-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .p-title{font-weight:1000;color:var(--slate);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .p-price{font-weight:1000;color:#0369a1;white-space:nowrap}
+    .p-meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;color:var(--mut);font-size:12px}
+    .seller{display:flex;align-items:center;gap:8px}
+    .seller-badge{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#34d399,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:1000;font-size:12px}
+
+    .empty{display:none;text-align:center;padding:50px 10px;color:var(--mut)}
+    .empty.show{display:block}
+
+    /* MODALS */
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:1000;padding:16px}
+    .modal.show{display:flex}
+    .modal-box{background:#fff;border-radius:18px;width:100%;max-width:760px;max-height:92vh;overflow:auto;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+    .modal-head{padding:18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .modal-head h3{font-size:18px}
+    .x{width:36px;height:36px;border-radius:50%;border:none;background:var(--soft);cursor:pointer;font-weight:1000}
+    .x:hover{background:#e0f2fe;color:#0369a1}
+    .modal-body{padding:18px}
+
+    /* PRODUCT MODAL */
+    .pm-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+    .pm-img{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--line)}
+    .pm-img img{width:100%;height:360px;object-fit:cover;display:block}
+    .thumbs{display:flex;gap:8px;overflow-x:auto;padding-top:10px}
+    .thumbs img{width:70px;height:54px;object-fit:cover;border-radius:12px;border:2px solid transparent;cursor:pointer;background:var(--line)}
+    .thumbs img.active{border-color:var(--b)}
+    .pm-title{font-weight:1100;font-size:20px}
+    .pm-price{font-weight:1100;font-size:22px;color:#0369a1;margin-top:4px}
+    .pm-meta{margin-top:10px;color:#475569;font-weight:900;font-size:13px}
+    .seller-card{margin-top:14px;border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--soft2);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .seller-card .seller-badge{width:42px;height:42px;font-size:14px}
+    .seller-card .who{font-weight:1100}
+    .desc{margin-top:14px;color:#334155}
+
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-weight:1000;font-size:12px;color:#334155}
+    .chip.good{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+    .chip.warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+
+    /* PROFILE */
+    .profile-layout{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .panel-pad{padding:16px}
+
+    .profile-card{position:relative;overflow:hidden}
+    .profile-banner{height:70px;background:linear-gradient(135deg,rgba(56,189,248,.35),rgba(37,99,235,.25))}
+    .profile-top{padding:14px 16px 16px 16px;display:flex;gap:12px;align-items:center}
+    .profile-avatar{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#fb923c,#ec4899);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:1100;font-size:18px;margin-top:-28px;border:3px solid #fff;box-shadow:0 10px 20px rgba(0,0,0,.10)}
+    .profile-top .name{font-weight:1100;font-size:16px}
+    .profile-top .email{font-size:12px;color:var(--mut);font-weight:900;margin-top:2px}
+
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px 16px 16px}
+    .stat{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--soft2)}
+    .stat .n{font-weight:1200;font-size:18px}
+    .stat .l{font-size:11px;color:var(--mut);font-weight:1000;margin-top:2px}
+
+    .seg{display:flex;gap:6px;padding:10px;background:var(--soft2);border:1px solid var(--line);border-radius:999px}
+    .seg button{flex:1;border:none;background:transparent;padding:10px 12px;border-radius:999px;cursor:pointer;font-weight:1100;color:#334155}
+    .seg button.active{background:#fff;border:1px solid rgba(226,232,240,.9);box-shadow:0 6px 18px rgba(0,0,0,.08);color:#0369a1}
+
+    .list{margin-top:12px;display:grid;gap:12px}
+
+    .item{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+    .thumb{width:120px;height:86px;border-radius:14px;border:1px solid var(--line);object-fit:cover;background:var(--line);flex:0 0 auto}
+    .item-main{flex:1;min-width:220px}
+    .item-title{font-weight:1100}
+    .item-sub{margin-top:4px;color:var(--mut);font-weight:900;font-size:12px}
+    .item-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+
+    /* SELL */
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .preview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+    .preview-item{position:relative;border-radius:14px;overflow:hidden;background:var(--line);height:92px}
+    .preview-item img{width:100%;height:100%;object-fit:cover;display:block}
+    .preview-item button{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.92);cursor:pointer;font-weight:1100}
+
+    /* CHAT */
+    .chat-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:180}
+    .chat-overlay.show{display:block}
+
+    .chat{display:none;position:fixed;top:70px;right:0;height:calc(100vh - 70px);width:420px;background:#fff;z-index:200;border-left:1px solid var(--line);box-shadow:-10px 0 30px rgba(0,0,0,.12)}
+    .chat.show{display:flex}
+    .chat-shell{display:flex;height:100%;width:100%}
+    .chat-list{width:175px;min-width:175px;background:var(--soft2);border-right:1px solid var(--line);display:flex;flex-direction:column}
+    .chat-top{padding:12px;border-bottom:1px solid var(--line);background:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .chat-top h4{font-size:14px}
+
+    .conv{padding:10px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;gap:10px}
+    .conv:hover{background:#fff}
+    .conv.active{background:#e0f2fe}
+    .conv .t{font-size:10px;color:#94a3b8;font-weight:1000}
+    .conv .n{font-size:12px;font-weight:1100}
+    .conv .p{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px}
+
+    .chat-main{flex:1;display:flex;flex-direction:column;background:var(--soft2);min-width:0}
+    .chat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-weight:1000;padding:14px;text-align:center}
+
+    .chat-header{padding:12px;border-bottom:1px solid var(--line);background:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .chat-header .left{display:flex;align-items:center;gap:10px;min-width:0}
+    .chat-header .left .who{font-weight:1100;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    .msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+    .msg{max-width:80%;padding:10px 12px;border-radius:16px;font-size:13px;line-height:1.35}
+    .msg.sent{align-self:flex-end;background:var(--b);color:#fff;border-bottom-right-radius:6px}
+    .msg.recv{align-self:flex-start;background:#fff;border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+    .msg .time{font-size:10px;opacity:.85;margin-top:4px}
+
+    .chat-input{padding:12px;border-top:1px solid var(--line);background:#fff;display:flex;gap:10px}
+    .chat-input input{border-radius:999px}
+    .send{width:44px;height:44px;border-radius:50%;border:none;background:var(--b);color:#fff;font-weight:1100;cursor:pointer}
+    .send:hover{background:#0369a1}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 12px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.25);z-index:2200;display:none;max-width:min(560px, calc(100% - 28px));font-weight:1000}
+    .toast.show{display:block}
+
+    /* MOBILE */
+    @media (max-width: 900px){
+      .profile-layout{grid-template-columns:1fr}
+      .stats{grid-template-columns:repeat(3,1fr)}
     }
 
-    /* Products Grid */
-    .products-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 24px;
-      margin-bottom: 40px;
-    }
-    .product-card {
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: all 0.3s;
-      cursor: pointer;
-    }
-    .product-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-    }
-    .product-image {
-      width: 100%;
-      height: 220px;
-      object-fit: cover;
-      display: block;
-    }
-    .product-body { padding: 16px; }
-    .product-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 12px;
-    }
-    .product-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .product-price {
-      font-size: 20px;
-      font-weight: 800;
-      color: #0284c7;
-      white-space: nowrap;
-      margin-left: 8px;
-    }
-    .product-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #f1f5f9;
-    }
-    .seller-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .seller-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #a855f7, #ec4899);
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .seller-name { font-size: 14px; color: #64748b; }
-    .product-date { font-size: 12px; color: #94a3b8; }
-    .location-tag {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      background: rgba(255,255,255,0.95);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #475569;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .favorite-btn {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: white;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      color: #94a3b8;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: all 0.3s;
-    }
-    .favorite-btn:hover, .favorite-btn.active {
-      color: #ef4444;
-      transform: scale(1.1);
-    }
-    .product-image-wrapper { position: relative; }
+    @media (max-width: 768px){
+      .container{padding:0 14px}
+      .page{padding:14px 0}
+      .products-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+      .product-card img{height:150px}
+      .pm-grid{grid-template-columns:1fr}
+      .pm-img img{height:260px}
+      .preview-grid{grid-template-columns:repeat(3,1fr)}
 
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      display: none;
-    }
-    .empty-state.show { display: block; }
-    .empty-icon { font-size: 64px; margin-bottom: 16px; }
-    .empty-title { font-size: 20px; font-weight: 700; color: #475569; margin-bottom: 8px; }
-    .empty-text { color: #94a3b8; }
+      /* Chat becomes full-screen */
+      .chat{top:0;right:0;left:0;width:100%;height:100vh;border-left:none;box-shadow:none}
+      .chat-shell{flex-direction:column}
+      .chat-list{width:100%;min-width:0}
+      .chat-main{display:none}
+      .chat-main.active{display:flex}
 
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .modal.show { display: flex; }
-    .modal-content {
-      background: white;
-      border-radius: 20px;
-      max-width: 800px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      position: relative;
-      animation: slideIn 0.3s;
-    }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .modal-close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: white;
-      border: none;
-      cursor: pointer;
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      z-index: 10;
-    }
-    .modal-image { width: 100%; height: 400px; object-fit: cover; }
-    .modal-body { padding: 24px; }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
-    .modal-title { font-size: 28px; font-weight: 800; color: #1e293b; margin: 0 0 8px 0; }
-    .modal-price { font-size: 32px; font-weight: 800; color: #0284c7; }
-    .modal-meta { text-align: right; color: #64748b; }
-    .seller-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: #f8fafc;
-      padding: 20px;
-      border-radius: 16px;
-      margin: 24px 0;
-    }
-    .seller-card .avatar { width: 56px; height: 56px; font-size: 20px; }
-    .seller-details h4 { margin: 0 0 4px 0; font-size: 18px; }
-    .seller-rating { color: #f59e0b; font-size: 14px; }
-    .modal-description { margin: 24px 0; line-height: 1.8; color: #475569; }
-    .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
-    .btn-large { flex: 1; padding: 16px 24px; font-size: 18px; justify-content: center; }
-    .btn-secondary { background: #f1f5f9; color: #475569; }
-    .btn-secondary:hover { background: #e2e8f0; }
-
-    /* ---------- CHAT: overlay + mini panel ---------- */
-    .chat-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.35);
-      z-index: 180;
-    }
-    .chat-overlay.show { display: block; }
-
-    .chat-page {
-      display: none;
-      position: fixed;
-      top: 70px;            /* under navbar */
-      right: 0;
-      height: calc(100vh - 70px);
-      width: 420px;
-      background: white;
-      z-index: 200;
-      box-shadow: -10px 0 30px rgba(0,0,0,0.12);
-      border-left: 1px solid #e2e8f0;
-    }
-    .chat-page.show { display: flex; }
-
-    .chat-sidebar {
-      width: 100%;
-      background: #f8fafc;
-      border-right: 1px solid #e2e8f0;
-      display: flex;
-      flex-direction: column;
-    }
-    .chat-header {
-      padding: 14px 16px;
-      background: white;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-    .chat-header h2 { margin: 0; font-size: 18px; }
-
-    .chat-close-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #f1f5f9;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      color: #64748b;
-      transition: all 0.2s;
-    }
-    .chat-close-btn:hover { background: #e0f2fe; color: #0284c7; }
-
-    .chat-shell {
-      display: flex;
-      height: 100%;
-      width: 100%;
+      .thumb{width:100%;height:160px}
+      .item-main{min-width:0}
     }
 
-    /* In-panel desktop split: list left, messages right */
-    .chat-sidebar {
-      width: 170px;
-      min-width: 170px;
-    }
-    .conversations-list { flex: 1; overflow-y: auto; }
-
-    .conversation-item {
-      display: flex;
-      gap: 10px;
-      padding: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .conversation-item:hover { background: white; }
-    .conversation-item.active { background: #e0f2fe; }
-    .conversation-item.unread { background: #f0f9ff; }
-
-    .conversation-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #34d399, #3b82f6);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      flex-shrink: 0;
-      font-size: 13px;
-    }
-    .conversation-content { flex: 1; min-width: 0; }
-    .conversation-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2px;
-      gap: 6px;
-    }
-    .conversation-name { font-weight: 700; color: #1e293b; font-size: 13px; }
-    .conversation-time { font-size: 11px; color: #94a3b8; white-space: nowrap; }
-    .conversation-product { font-size: 12px; color: #64748b; margin-bottom: 2px; }
-    .conversation-preview {
-      font-size: 12px;
-      color: #64748b;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .conversation-item.unread .conversation-preview { font-weight: 600; color: #1e293b; }
-    .unread-indicator {
-      width: 8px;
-      height: 8px;
-      background: #38bdf8;
-      border-radius: 50%;
-      margin-left: 2px;
-      flex-shrink: 0;
-      align-self: center;
-    }
-
-    .chat-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: #f8fafc;
-      min-width: 0;
-    }
-
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .message {
-      max-width: 80%;
-      padding: 10px 12px;
-      border-radius: 16px;
-      font-size: 14px;
-      line-height: 1.5;
-      animation: messageSlide 0.2s;
-    }
-    @keyframes messageSlide {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .message.sent {
-      align-self: flex-end;
-      background: #38bdf8;
-      color: white;
-      border-bottom-right-radius: 4px;
-    }
-    .message.received {
-      align-self: flex-start;
-      background: white;
-      color: #1e293b;
-      border-bottom-left-radius: 4px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-    }
-    .message-time { font-size: 10px; opacity: 0.8; margin-top: 4px; }
-
-    .chat-input-area {
-      padding: 12px;
-      background: white;
-      border-top: 1px solid #e2e8f0;
-    }
-    .chat-input-wrapper { display: flex; gap: 10px; }
-    .chat-input {
-      flex: 1;
-      padding: 12px 14px;
-      border: 2px solid #e2e8f0;
-      border-radius: 999px;
-      font-size: 14px;
-      outline: none;
-    }
-    .chat-input:focus { border-color: #38bdf8; }
-    .btn-send {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: #38bdf8;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    .btn-send:hover { background: #0284c7; transform: scale(1.04); }
-
-    .chat-empty {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #94a3b8;
-      padding: 16px;
-      text-align: center;
-    }
-    .chat-empty-icon { font-size: 56px; margin-bottom: 10px; opacity: 0.3; }
-
-    .chat-back-btn {
-      display: none; /* visible on mobile */
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #f1f5f9;
-      border: none;
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      color: #64748b;
-      transition: all 0.2s;
-    }
-    .chat-back-btn:hover { background: #e0f2fe; color: #0284c7; }
-
-    /* Sell Modal Form */
-    .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #374151; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    textarea {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-size: 16px;
-      resize: vertical;
-      min-height: 100px;
-      font-family: inherit;
-    }
-    .image-upload {
-      border: 2px dashed #cbd5e1;
-      border-radius: 12px;
-      padding: 40px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .image-upload:hover { border-color: #38bdf8; background: #f0f9ff; }
-
-    /* Mobile Responsiveness */
-    @media (max-width: 768px) {
-      .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 12px;
-      }
-      .product-image { height: 160px; }
-
-      /* chat becomes fullscreen on mobile */
-      .chat-page {
-        top: 0;
-        height: 100vh;
-        width: 100%;
-        border-left: none;
-        box-shadow: none;
-      }
-      .chat-shell { flex-direction: column; }
-
-      .chat-sidebar {
-        width: 100%;
-        min-width: 0;
-        border-right: none;
-      }
-
-      .chat-main { display: none; }
-      .chat-main.active { display: flex; }
-
-      .chat-back-btn { display: inline-flex; }
-      .modal-content {
-        margin: 0;
-        max-height: 100vh;
-        border-radius: 0;
-      }
-      .form-row { grid-template-columns: 1fr; }
-    }
-
-    /* Utilities */
-    .hidden { display: none !important; }
+    .hidden{display:none!important}
   </style>
 </head>
 <body>
 
-  <!-- Navigation -->
   <nav>
     <div class="container nav-content">
-      <a href="#" class="logo" onclick="showHome(); return false;">
-        <div class="logo-icon">👶</div>
-        <div class="logo-text">
-          <h1>Miniblocket</h1>
-          <p>Bara barnsaker</p>
+      <div class="brand" onclick="showHome()">
+        <div class="logo">👶</div>
+        <div>
+          <strong>Miniblocket</strong>
+          <small>Bara barnsaker</small>
         </div>
-      </a>
+      </div>
 
-      <div class="nav-actions">
-        <button class="btn-icon" onclick="showMessages()" title="Meddelanden">
+      <div class="nav-actions" id="navActions">
+        <button class="btn-icon" onclick="openChatPanel()" title="Meddelanden">
           💬
-          <span class="badge" id="msgBadge">2</span>
+          <span class="badge" id="msgBadge">0</span>
         </button>
-        <button class="btn btn-primary" onclick="openSellModal()">
-          <span>+</span> Sälj
-        </button>
-        <div class="avatar">JD</div>
+        <button class="btn btn-primary" onclick="openSell()" id="sellBtn">+ Sälj</button>
+        <button class="btn btn-soft" onclick="openAuth('signup')" id="authBtn">Skapa konto</button>
+        <div class="avatar hidden" id="avatar" onclick="toggleUserMenu(event)">??</div>
       </div>
     </div>
   </nav>
 
-  <!-- Main Content -->
-  <div class="container" id="homePage">
+  <!-- HOME -->
+  <div class="container page" id="homePage">
 
-    <!-- Search & Filter -->
-    <div class="search-section">
+    <div class="search-card">
       <div class="search-row">
-        <div class="search-input-wrapper">
-          <input type="text" id="searchInput" placeholder="Sök efter leksaker, barnvagnar..." onkeyup="filterProducts()">
+        <div class="search-input">
+          <input id="q" placeholder="Sök efter leksaker, barnvagnar..." onkeyup="applyFilters()" />
         </div>
-        <select id="locationFilter" onchange="filterProducts()" style="padding-left: 16px;">
+        <select id="loc" onchange="applyFilters()">
           <option value="">📍 Alla platser</option>
-          <option value="Stockholm">Stockholm</option>
-          <option value="Göteborg">Göteborg</option>
-          <option value="Malmö">Malmö</option>
-          <option value="Uppsala">Uppsala</option>
+          <option>Stockholm</option>
+          <option>Göteborg</option>
+          <option>Malmö</option>
+          <option>Uppsala</option>
         </select>
-        <select id="priceFilter" onchange="filterProducts()" style="padding-left: 16px;">
+        <select id="price" onchange="applyFilters()">
           <option value="">💰 Pris</option>
           <option value="0-100">0 - 100 kr</option>
           <option value="100-500">100 - 500 kr</option>
@@ -747,151 +270,201 @@
         </select>
       </div>
 
-      <div class="categories">
-        <button class="category-btn active" onclick="filterCategory('all', this)">Allt</button>
-        <button class="category-btn" onclick="filterCategory('leksaker', this)">🧸 Leksaker</button>
-        <button class="category-btn" onclick="filterCategory('barnvagn', this)">🍼 Barnvagnar</button>
-        <button class="category-btn" onclick="filterCategory('bilbarnstol', this)">🚗 Bilbarnstolar</button>
-        <button class="category-btn" onclick="filterCategory('kläder', this)">👕 Kläder</button>
-        <button class="category-btn" onclick="filterCategory('möbler', this)">🛏️ Barnmöbler</button>
+      <div class="cats">
+        <button class="cat active" onclick="setCat('all', this)">Allt</button>
+        <button class="cat" onclick="setCat('leksaker', this)">🧸 Leksaker</button>
+        <button class="cat" onclick="setCat('barnvagn', this)">🍼 Barnvagnar</button>
+        <button class="cat" onclick="setCat('bilbarnstol', this)">🚗 Bilbarnstolar</button>
+        <button class="cat" onclick="setCat('kläder', this)">👕 Kläder</button>
+        <button class="cat" onclick="setCat('möbler', this)">🛏️ Barnmöbler</button>
       </div>
     </div>
 
-    <!-- Products Grid -->
-    <div id="productsGrid" class="products-grid"></div>
+    <div id="products" class="products-grid"></div>
 
-    <!-- Empty State -->
-    <div id="emptyState" class="empty-state">
-      <div class="empty-icon">🔍</div>
-      <div class="empty-title">Inga annonser hittades</div>
-      <div class="empty-text">Prova att ändra dina filter eller sökord</div>
+    <div id="empty" class="empty">
+      <div style="font-size:56px;opacity:.25">🔍</div>
+      <div style="font-weight:1100;margin-top:8px">Inga annonser hittades</div>
+      <div style="margin-top:6px">Prova att ändra dina filter</div>
+    </div>
+
+  </div>
+
+  <!-- PROFILE -->
+  <div class="container page hidden" id="profilePage">
+    <div class="profile-layout">
+      <!-- left -->
+      <div class="panel profile-card">
+        <div class="profile-banner"></div>
+        <div class="profile-top">
+          <div class="profile-avatar" id="profileAvatar">??</div>
+          <div>
+            <div class="name" id="profileName">Profil</div>
+            <div class="email" id="profileEmail">—</div>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="n" id="statAds">0</div><div class="l">annonser</div></div>
+          <div class="stat"><div class="n" id="statConvos">0</div><div class="l">chattar</div></div>
+          <div class="stat"><div class="n" id="statFav">0</div><div class="l">favoriter</div></div>
+        </div>
+        <div style="padding:0 16px 16px 16px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" style="flex:1" onclick="openSell()">+ Ny annons</button>
+          <button class="btn btn-soft" style="flex:1" onclick="showHome()">Start</button>
+        </div>
+      </div>
+
+      <!-- right -->
+      <div>
+        <div class="panel panel-pad">
+          <div class="seg" role="tablist" aria-label="Profilflikar">
+            <button class="active" id="tabAds" onclick="setProfileTab('ads')">Mina annonser</button>
+            <button id="tabConvos" onclick="setProfileTab('convos')">Konversationer</button>
+            <button id="tabFav" onclick="setProfileTab('fav')">Favoriter</button>
+          </div>
+          <div class="list" id="profileContent"></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Chat Overlay (click outside to close) -->
+  <!-- Chat panel -->
   <div id="chatOverlay" class="chat-overlay" onclick="closeChatPanel()"></div>
-
-  <!-- Chat/Messages Panel -->
-  <div id="chatPage" class="chat-page" aria-hidden="true">
+  <div id="chat" class="chat" aria-hidden="true">
     <div class="chat-shell">
-
-      <div class="chat-sidebar">
-        <div class="chat-header">
-          <h2>💬 Meddelanden</h2>
-          <button class="chat-close-btn" onclick="closeChatPanel()" title="Stäng">✕</button>
+      <div class="chat-list">
+        <div class="chat-top">
+          <h4>💬 Meddelanden</h4>
+          <button class="x" onclick="closeChatPanel()">✕</button>
         </div>
-        <div class="conversations-list" id="conversationsList"></div>
+        <div id="convList" style="flex:1;overflow:auto"></div>
       </div>
 
-      <div class="chat-main" id="chatMain">
-        <div class="chat-empty" id="emptyChat">
-          <div class="chat-empty-icon">💬</div>
-          <p>Välj en konversation för att börja chatta</p>
-        </div>
+      <div id="chatMain" class="chat-main">
+        <div id="chatEmpty" class="chat-empty">Välj en konversation för att börja chatta</div>
 
-        <div id="activeChat" style="display: none; flex-direction: column; height: 100%;">
+        <div id="chatActive" class="hidden" style="height:100%;display:flex;flex-direction:column">
           <div class="chat-header">
-            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-              <button class="chat-back-btn" onclick="backToList()" title="Tillbaka">←</button>
-              <div class="conversation-avatar" id="chatAvatar">AS</div>
-              <div style="min-width: 0;">
-                <div style="font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="chatName">Anna S.</div>
-                <div style="font-size: 12px; color: #10b981;">🟢 Aktiv nu</div>
+            <div class="left">
+              <div class="seller-badge" id="chatAva">??</div>
+              <div style="min-width:0">
+                <div class="who" id="chatWith">—</div>
+                <div style="font-size:11px;color:#10b981;font-weight:1000">🟢 Aktiv nu</div>
               </div>
             </div>
-
-            <!-- on desktop, this acts as "back to list" (not close) -->
-            <button class="chat-close-btn" onclick="backToList()" title="Till listan">⟲</button>
+            <button class="x" onclick="backToConversations()" title="Till listan">⟲</button>
           </div>
 
-          <div class="chat-messages" id="chatMessages"></div>
+          <div class="msgs" id="msgs"></div>
 
-          <div class="chat-input-area">
-            <div class="chat-input-wrapper">
-              <input type="text" class="chat-input" id="messageInput" placeholder="Skriv ett meddelande..." onkeypress="handleEnter(event)">
-              <button class="btn-send" onclick="sendMessage()">➤</button>
+          <div class="chat-input">
+            <input id="msgIn" placeholder="Skriv ett meddelande..." onkeypress="onEnter(event)" />
+            <button class="send" onclick="sendMsg()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product modal -->
+  <div id="productModal" class="modal" onclick="closeOnBackdrop(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <h3>Annons</h3>
+        <button class="x" onclick="closeProduct()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="pm-grid">
+          <div>
+            <div class="pm-img"><img id="pmImg" alt="" /></div>
+            <div class="thumbs" id="pmThumbs"></div>
+          </div>
+          <div>
+            <div class="pm-title" id="pmTitle">—</div>
+            <div class="pm-price" id="pmPrice">—</div>
+            <div class="pm-meta" id="pmMeta">—</div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+              <span class="chip good">✅ Säker affär</span>
+              <span class="chip warn">♻️ Hållbart köp</span>
+            </div>
+
+            <div class="seller-card">
+              <div class="seller-badge" id="pmSellerAva">??</div>
+              <div style="flex:1;min-width:0">
+                <div class="who" id="pmSeller">—</div>
+                <div style="font-size:12px;color:var(--mut);font-weight:1000" id="pmSellerLine">Säljare</div>
+              </div>
+              <button class="btn btn-primary" onclick="messageSeller()">💬 Skriv till säljare</button>
+            </div>
+
+            <div class="desc">
+              <div style="font-weight:1100;margin-bottom:6px">Beskrivning</div>
+              <div id="pmDesc">—</div>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+              <button class="btn btn-soft" id="pmFavBtn" onclick="toggleFavoriteFromModal()">🤍 Favorit</button>
+              <button class="btn btn-soft" onclick="openSellerProfileFromModal()">👤 Se profil</button>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- Product Detail Modal -->
-  <div id="productModal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <button class="modal-close" onclick="closeProductModal()">✕</button>
-      <img id="modalImage" src="" class="modal-image" alt="">
-
+  <!-- Auth modal -->
+  <div id="authModal" class="modal" onclick="closeOnBackdrop(event)">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:520px">
+      <div class="modal-head">
+        <div>
+          <h3 id="authTitle">Skapa konto</h3>
+          <div style="font-size:12px;color:var(--mut);font-weight:1000" id="authSub">Skapa en användare (demo i din webbläsare).</div>
+        </div>
+        <button class="x" onclick="closeAuth()">✕</button>
+      </div>
       <div class="modal-body">
-        <div class="modal-header">
-          <div>
-            <h2 class="modal-title" id="modalTitle"></h2>
-            <div class="modal-price" id="modalPrice"></div>
-          </div>
-          <div class="modal-meta">
-            <div>📍 <span id="modalLocation"></span></div>
-            <div style="font-size: 14px; margin-top: 4px;" id="modalDate"></div>
-          </div>
+        <div id="nameRow" style="margin-bottom:12px">
+          <div style="font-weight:1000;margin-bottom:6px">Namn</div>
+          <input id="aName" placeholder="t.ex. Khanwali" />
         </div>
 
-        <div class="seller-card">
-          <div class="avatar" id="modalSellerAvatar" style="background: linear-gradient(135deg, #a855f7, #ec4899);">AS</div>
-          <div class="seller-details">
-            <h4 id="modalSeller">Anna S.</h4>
-            <div class="seller-rating">⭐⭐⭐⭐⭐ (12)</div>
-          </div>
-          <button class="btn btn-primary" onclick="startChatFromModal()" style="margin-left: auto;">
-            💬 Skriv till säljare
-          </button>
-        </div>
+        <div style="font-weight:1000;margin-bottom:6px">E-post</div>
+        <input id="aEmail" placeholder="namn@mail.se" />
 
-        <div class="modal-description">
-          <h3 style="margin-bottom: 12px; color: #1e293b;">Beskrivning</h3>
-          <p id="modalDescription" style="color: #475569; line-height: 1.8;"></p>
-        </div>
+        <div style="font-weight:1000;margin-bottom:6px">Lösenord</div>
+        <input id="aPass" type="password" placeholder="Minst 6 tecken" />
 
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0;">
-          <div style="background: #f0fdf4; padding: 16px; border-radius: 12px; text-align: center;">
-            <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
-            <div style="font-size: 13px; font-weight: 600; color: #166534;">Fungerar perfekt</div>
-          </div>
-          <div style="background: #eff6ff; padding: 16px; border-radius: 12px; text-align: center;">
-            <div style="font-size: 24px; margin-bottom: 8px;">🛡️</div>
-            <div style="font-size: 13px; font-weight: 600; color: #1e40af;">Säker betalning</div>
-          </div>
-          <div style="background: #fdf2f8; padding: 16px; border-radius: 12px; text-align: center;">
-            <div style="font-size: 24px; margin-bottom: 8px;">♻️</div>
-            <div style="font-size: 13px; font-weight: 600; color: #9d174d;">Hållbart köp</div>
-          </div>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn btn-soft" style="flex:1" onclick="toggleAuthMode()" id="authSwitch">Jag har redan konto</button>
+          <button class="btn btn-primary" style="flex:1" onclick="submitAuth()" id="authDo">Skapa konto</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Sell Modal -->
-  <div id="sellModal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
-      <div style="padding: 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin: 0; font-size: 24px;">Lägg till annons</h2>
-        <button class="btn-icon" onclick="closeSellModal()" style="position: static;">✕</button>
-      </div>
-
-      <div style="padding: 24px;">
-        <div class="form-group">
-          <label>Titel</label>
-          <input type="text" id="sellTitle" placeholder="t.ex. Bugaboo Cameleon 3" style="padding-left: 16px;">
+  <!-- Sell modal -->
+  <div id="sellModal" class="modal" onclick="closeOnBackdrop(event)">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:680px">
+      <div class="modal-head">
+        <div>
+          <h3>Ny annons</h3>
+          <div style="font-size:12px;color:var(--mut);font-weight:1000" id="sellAs">Säljer som: —</div>
         </div>
+        <button class="x" onclick="closeSell()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-weight:1000;margin-bottom:6px">Titel</div>
+        <input id="sTitle" placeholder="t.ex. Bugaboo Cameleon 3" />
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Pris (kr)</label>
-            <input type="number" id="sellPrice" placeholder="0" style="padding-left: 16px;">
+        <div class="grid2" style="margin-top:10px">
+          <div>
+            <div style="font-weight:1000;margin-bottom:6px">Pris (kr)</div>
+            <input id="sPrice" type="number" placeholder="0" />
           </div>
-          <div class="form-group">
-            <label>Kategori</label>
-            <select id="sellCategory" style="padding-left: 16px;">
+          <div>
+            <div style="font-weight:1000;margin-bottom:6px">Kategori</div>
+            <select id="sCat">
               <option value="leksaker">Leksaker</option>
               <option value="barnvagn">Barnvagn</option>
               <option value="bilbarnstol">Bilbarnstol</option>
@@ -901,515 +474,1028 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Plats</label>
-          <select id="sellLocation" style="padding-left: 16px;">
-            <option value="Stockholm">Stockholm</option>
-            <option value="Göteborg">Göteborg</option>
-            <option value="Malmö">Malmö</option>
-            <option value="Uppsala">Uppsala</option>
+        <div style="margin-top:10px">
+          <div style="font-weight:1000;margin-bottom:6px">Plats</div>
+          <select id="sLoc">
+            <option>Stockholm</option>
+            <option>Göteborg</option>
+            <option>Malmö</option>
+            <option>Uppsala</option>
           </select>
         </div>
 
-        <div class="form-group">
-          <label>Beskrivning</label>
-          <textarea id="sellDescription" placeholder="Beskriv varan..."></textarea>
+        <div style="margin-top:10px">
+          <div style="font-weight:1000;margin-bottom:6px">Beskrivning</div>
+          <textarea id="sDesc" placeholder="Beskriv varan..." rows="4"></textarea>
         </div>
 
-        <div class="form-group">
-          <label>Bilder</label>
-          <div class="image-upload" onclick="alert('I en riktig app skulle du kunna ladda upp bilder här!')">
-            <div style="font-size: 48px; margin-bottom: 12px;">📷</div>
-            <div style="color: #64748b;">Klicka för att ladda upp bilder</div>
-          </div>
+        <div style="margin-top:10px">
+          <div style="font-weight:1000;margin-bottom:6px">Bilder</div>
+          <input id="sImgs" type="file" accept="image/*" multiple />
+          <div style="font-size:12px;color:var(--mut);font-weight:900;margin-top:6px">Välj 1–6 bilder (demo: lagras lokalt i denna session).</div>
+          <div class="preview-grid" id="sPreview"></div>
         </div>
-      </div>
 
-      <div style="padding: 24px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px;">
-        <button class="btn btn-secondary" onclick="closeSellModal()" style="flex: 1;">Avbryt</button>
-        <button class="btn btn-primary" onclick="publishAd()" style="flex: 1;">Publicera</button>
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-soft" style="flex:1" onclick="closeSell()">Avbryt</button>
+          <button class="btn btn-primary" style="flex:1" onclick="publish()">Publicera</button>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Public seller profile modal -->
+  <div id="sellerModal" class="modal" onclick="closeOnBackdrop(event)">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:760px">
+      <div class="modal-head">
+        <h3 id="sellerTitle">Profil</h3>
+        <button class="x" onclick="hide('sellerModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="panel panel-pad" style="margin-bottom:12px">
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div class="seller-badge" style="width:46px;height:46px;font-size:14px" id="sellerAva">??</div>
+            <div>
+              <div class="card-title" id="sellerName">—</div>
+              <div class="muted">⭐️⭐️⭐️⭐️⭐️ (demo) • Aktiv nyligen</div>
+            </div>
+          </div>
+        </div>
+        <div class="list" id="sellerAds"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User menu -->
+  <div id="userMenu" class="hidden" style="position:fixed;top:78px;right:20px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 24px rgba(0,0,0,.12);min-width:220px;overflow:hidden;z-index:120">
+    <div style="padding:12px 14px;border-bottom:1px solid #f1f5f9">
+      <div style="font-weight:1100" id="uName">—</div>
+      <div style="font-size:12px;color:var(--mut);font-weight:900" id="uEmail">—</div>
+    </div>
+    <button onclick="showProfile()" style="width:100%;border:none;background:#fff;padding:12px 14px;text-align:left;font-weight:1100;cursor:pointer">Min profil</button>
+    <button onclick="logout()" style="width:100%;border:none;background:#fff;padding:12px 14px;text-align:left;font-weight:1100;cursor:pointer">Logga ut</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
   <script>
-    // Data
-    const products = [
-      {
-        id: 1,
-        title: "Bugaboo Cameleon 3 - Svart",
-        price: 2500,
-        category: "barnvagn",
-        location: "Stockholm",
-        image: "https://images.unsplash.com/photo-1566004100631-35d015d6a491?w=800&auto=format&fit=crop",
-        seller: "Anna S.",
-        sellerAvatar: "AS",
-        date: "Idag",
-        description: "Väl-skött Bugaboo Cameleon 3 i svart färg. Köpt 2019 men fortfarande i mycket gott skick. Inkluderar liggdel, sittdel, regnskydd och åkpåse. Rökfritt hem. Kan mötas upp i centrala Stockholm eller skickas med frakt."
-      },
-      {
-        id: 2,
-        title: "Britax Max-Way Bilbarnstol 9-25kg",
-        price: 1200,
-        category: "bilbarnstol",
-        location: "Göteborg",
-        image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&auto=format&fit=crop",
-        seller: "Johan P.",
-        sellerAvatar: "JP",
-        date: "Igår",
-        description: "Säker och bekväm bilbarnstol från Britax. ISOFIX-fäste. Aldrig varit med om olycka. Passar barn 9-25 kg. Monteringsanvisningar ingår."
-      },
-      {
-        id: 3,
-        title: "LEGO Duplo Stor Låda - 100+ bitar",
-        price: 350,
-        category: "leksaker",
-        location: "Malmö",
-        image: "https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?w=800&auto=format&fit=crop",
-        seller: "Maria L.",
-        sellerAvatar: "ML",
-        date: "2 dagar sedan",
-        description: "Stor samling LEGO Duplo i blandade färger. Alla bitar hela och rena. Perfekt för barn 1-5 år. Säljs i stor plåtlåda."
-      },
-      {
-        id: 4,
-        title: "IKEA Sundvik Spjälsäng med madrass",
-        price: 800,
-        category: "möbler",
-        location: "Uppsala",
-        image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&auto=format&fit=crop",
-        seller: "Erik N.",
-        sellerAvatar: "EN",
-        date: "3 dagar sedan",
-        description: "Vit spjälsäng från IKEA med justerbar botten. Inkluderar skummadrass och sängkläder om så önskas. Lite skrapad på ena sidan men fungerar perfekt."
-      },
-      {
-        id: 5,
-        title: "Polarn O. Pyret Vinteroverall 92cl",
-        price: 450,
-        category: "kläder",
-        location: "Stockholm",
-        image: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=800&auto=format&fit=crop",
-        seller: "Sofia K.",
-        sellerAvatar: "SK",
-        date: "Idag",
-        description: "Varm och skön vinteroverall från POP. Använd en säsong, fortfarande i fint skick. Blå färg med reflexdetaljer."
-      },
-      {
-        id: 6,
-        title: "BabyBjörn Bärsele One Air",
-        price: 900,
-        category: "leksaker",
-        location: "Göteborg",
-        image: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&auto=format&fit=crop",
-        seller: "Lisa M.",
-        sellerAvatar: "LM",
-        date: "Igår",
-        description: "Luftig bärsele i mesh-material. Perfekt för sommaren. Använd fåtal gånger. Alla instruktioner och förpackning finns kvar."
-      }
-    ];
+    const LS_USERS = 'mb_users_v2';
+    const LS_SESSION = 'mb_session_v2';
+    const LS_PRODUCTS = 'mb_products_v3';
+    const LS_FAV_PREFIX = 'mb_fav_';
+    const LS_CONV_PREFIX = 'mb_conv_';
 
-    let conversations = [
-      {
-        id: 1,
-        productId: 1,
-        with: "Anna S.",
-        avatar: "AS",
-        product: "Bugaboo Cameleon 3",
-        lastMessage: "Hej! Är vagnen fortfarande till salu?",
-        time: "10:30",
-        unread: true,
-        messages: [
-          { text: "Hej! Är vagnen fortfarande till salu?", sent: false, time: "10:30" }
-        ]
-      },
-      {
-        id: 2,
-        productId: 2,
-        with: "Johan P.",
-        avatar: "JP",
-        product: "Britax Bilbarnstol",
-        lastMessage: "Tack för snabb affär!",
-        time: "Igår",
-        unread: false,
-        messages: [
-          { text: "Hej, är stolen kvar?", sent: true, time: "Igår 14:20" },
-          { text: "Ja den är kvar! När kan du hämta?", sent: false, time: "Igår 14:25" },
-          { text: "Tack för snabb affär!", sent: false, time: "Igår 16:00" }
-        ]
-      }
-    ];
+    function favKey(userId){ return LS_FAV_PREFIX + userId + '_v1'; }
+    function convKey(userId){ return LS_CONV_PREFIX + userId + '_v1'; }
 
-    let currentChat = null;
+    let authMode = 'signup';
+    let session = loadJSON(LS_SESSION, null);
+
+    let products = loadJSON(LS_PRODUCTS, null);
+    if (!Array.isArray(products) || products.length === 0){
+      products = seedProducts();
+      saveJSON(LS_PRODUCTS, products);
+    }
+
+    let activeCat = 'all';
     let currentProduct = null;
+    let pmIdx = 0;
 
-    // Initialize
-    window.onload = function() {
+    let sellImgs = [];
+
+    let conversations = [];
+    let currentChat = null;
+
+    init();
+
+    function init(){
+      applyAuthUI();
+      loadUserData();
       renderProducts();
-      renderConversations();
+      applyFilters();
       updateBadge();
-      ensureChatLayout();
-    };
+      wireSellUpload();
 
-    window.addEventListener('resize', ensureChatLayout);
+      window.addEventListener('resize', ensureChatLayout);
+      document.addEventListener('click', () => closeUserMenu());
+      document.addEventListener('keydown', (e)=>{
+        if (e.key === 'Escape'){
+          closeAllModals();
+          if (isChatOpen()) closeChatPanel();
+          closeUserMenu();
+        }
+      });
+    }
 
-    // Render Products
-    function renderProducts(filtered = products) {
-      const grid = document.getElementById('productsGrid');
-      const empty = document.getElementById('emptyState');
+    /* AUTH */
+    function openAuth(mode){ authMode = mode || 'signup'; syncAuthUI(); show('authModal'); }
+    function closeAuth(){ hide('authModal'); }
 
-      if (filtered.length === 0) {
+    function toggleAuthMode(){ authMode = (authMode === 'signup') ? 'login' : 'signup'; syncAuthUI(); }
+
+    function syncAuthUI(){
+      const title = document.getElementById('authTitle');
+      const sub = document.getElementById('authSub');
+      const switchBtn = document.getElementById('authSwitch');
+      const doBtn = document.getElementById('authDo');
+      const nameRow = document.getElementById('nameRow');
+
+      if (authMode === 'signup'){
+        title.textContent = 'Skapa konto';
+        sub.textContent = 'Skapa en användare (demo i din webbläsare).';
+        switchBtn.textContent = 'Jag har redan konto';
+        doBtn.textContent = 'Skapa konto';
+        nameRow.style.display = 'block';
+      } else {
+        title.textContent = 'Logga in';
+        sub.textContent = 'Logga in med e-post och lösenord.';
+        switchBtn.textContent = 'Skapa nytt konto';
+        doBtn.textContent = 'Logga in';
+        nameRow.style.display = 'none';
+      }
+    }
+
+    function submitAuth(){
+      const name = document.getElementById('aName').value.trim();
+      const email = document.getElementById('aEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('aPass').value;
+
+      if (!email || !pass) return toast('Fyll i e-post och lösenord.');
+      if (pass.length < 6) return toast('Lösenordet måste vara minst 6 tecken.');
+
+      const users = loadJSON(LS_USERS, []);
+
+      if (authMode === 'signup'){
+        if (!name) return toast('Fyll i ditt namn.');
+        if (users.some(u => u.email === email)){
+          authMode = 'login';
+          syncAuthUI();
+          return toast('E-posten finns redan. Logga in istället.');
+        }
+        const user = { id: uid(), name, email, pass };
+        users.push(user);
+        saveJSON(LS_USERS, users);
+        session = { userId: user.id };
+        saveJSON(LS_SESSION, session);
+        applyAuthUI();
+        closeAuth();
+        loadUserData();
+        toast('Konto skapat!');
+      } else {
+        const user = users.find(u => u.email === email);
+        if (!user || user.pass !== pass) return toast('Fel e-post eller lösenord.');
+        session = { userId: user.id };
+        saveJSON(LS_SESSION, session);
+        applyAuthUI();
+        closeAuth();
+        loadUserData();
+        toast('Inloggning lyckades!');
+      }
+    }
+
+    function logout(){
+      session = null;
+      localStorage.removeItem(LS_SESSION);
+      applyAuthUI();
+      closeUserMenu();
+      showHome();
+      closeChatPanel();
+      toast('Utloggad.');
+    }
+
+    function getUser(){
+      if (!session) return null;
+      const users = loadJSON(LS_USERS, []);
+      return users.find(u => u.id === session.userId) || null;
+    }
+
+    function applyAuthUI(){
+      const user = getUser();
+      const authBtn = document.getElementById('authBtn');
+      const avatar = document.getElementById('avatar');
+      const sellBtn = document.getElementById('sellBtn');
+
+      if (user){
+        authBtn.classList.add('hidden');
+        avatar.classList.remove('hidden');
+        avatar.textContent = initials(user.name);
+        document.getElementById('uName').textContent = user.name;
+        document.getElementById('uEmail').textContent = user.email;
+        document.getElementById('sellAs').textContent = 'Säljer som: ' + user.name;
+        sellBtn.classList.remove('hidden');
+      } else {
+        authBtn.classList.remove('hidden');
+        avatar.classList.add('hidden');
+        document.getElementById('sellAs').textContent = 'Säljer som: —';
+        sellBtn.classList.add('hidden');
+      }
+
+      syncAuthUI();
+    }
+
+    function toggleUserMenu(e){ e.stopPropagation(); document.getElementById('userMenu').classList.toggle('hidden'); }
+    function closeUserMenu(){ document.getElementById('userMenu').classList.add('hidden'); }
+
+    /* NAV */
+    function showHome(){
+      document.getElementById('homePage').classList.remove('hidden');
+      document.getElementById('profilePage').classList.add('hidden');
+      applyFilters();
+    }
+
+    function showProfile(){
+      const user = getUser();
+      if (!user){
+        toast('Logga in för att se din profil.');
+        openAuth('login');
+        return;
+      }
+      document.getElementById('homePage').classList.add('hidden');
+      document.getElementById('profilePage').classList.remove('hidden');
+
+      document.getElementById('profileAvatar').textContent = initials(user.name);
+      document.getElementById('profileName').textContent = user.name;
+      document.getElementById('profileEmail').textContent = user.email;
+
+      refreshProfileStats();
+      setProfileTab('ads');
+      closeUserMenu();
+    }
+
+    function refreshProfileStats(){
+      const user = getUser();
+      if (!user) return;
+      const mine = products.filter(p => p.userId === user.id);
+      const favIds = loadFavorites();
+      document.getElementById('statAds').textContent = String(mine.length);
+      document.getElementById('statConvos').textContent = String(conversations.length);
+      document.getElementById('statFav').textContent = String(favIds.length);
+    }
+
+    function setProfileTab(tab){
+      ['ads','convos','fav'].forEach(t => {
+        document.getElementById('tab'+cap(t)).classList.toggle('active', t===tab);
+      });
+
+      const content = document.getElementById('profileContent');
+      content.innerHTML = '';
+
+      const user = getUser();
+      if (!user) return;
+
+      if (tab === 'ads'){
+        const mine = products.filter(p => p.userId === user.id);
+        if (!mine.length){
+          content.innerHTML = `<div class="panel panel-pad"><div class="muted">Du har inga annonser än.</div><div style="margin-top:12px"><button class="btn btn-primary" onclick="openSell()">+ Skapa annons</button></div></div>`;
+          return;
+        }
+        content.innerHTML = mine.map(p => profileItem(p, 'ad')).join('');
+        return;
+      }
+
+      if (tab === 'convos'){
+        if (!conversations.length){
+          content.innerHTML = `<div class="panel panel-pad"><div class="muted">Du har inga konversationer än.</div></div>`;
+          return;
+        }
+        content.innerHTML = conversations.map(c => `
+          <div class="panel panel-pad">
+            <div class="item">
+              <div class="seller-badge" style="width:46px;height:46px;font-size:14px">${escapeHtml(c.avatar)}</div>
+              <div class="item-main">
+                <div class="item-title">${escapeHtml(c.with)}</div>
+                <div class="item-sub">${escapeHtml(c.product)} • Senast ${escapeHtml(c.time)}</div>
+                <div class="item-sub" style="margin-top:8px">Senaste meddelande: ${escapeHtml(c.lastMessage)}</div>
+                <div class="item-actions">
+                  <button class="btn btn-primary" onclick="openChatPanel(); openChat(${c.id});">Öppna chat</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+        return;
+      }
+
+      if (tab === 'fav'){
+        const favIds = loadFavorites();
+        const favs = products.filter(p => favIds.includes(p.id));
+        if (!favs.length){
+          content.innerHTML = `<div class="panel panel-pad"><div class="muted">Du har inga favoriter än.</div></div>`;
+          return;
+        }
+        content.innerHTML = favs.map(p => profileItem(p, 'fav')).join('');
+        return;
+      }
+    }
+
+    function profileItem(p, mode){
+      const isFav = isFavorited(p.id);
+      const rightBtns = mode === 'fav'
+        ? `<button class="btn btn-danger" onclick="unfavorite(${p.id}); setProfileTab('fav');">Ta bort</button>`
+        : '';
+
+      return `
+        <div class="panel panel-pad">
+          <div class="item">
+            <img class="thumb" src="${p.images?.[0] || ''}" alt="" />
+            <div class="item-main">
+              <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                <div>
+                  <div class="item-title">${escapeHtml(p.title)}</div>
+                  <div class="item-sub">${p.price} kr • ${escapeHtml(p.location)} • ${escapeHtml(p.date)}</div>
+                </div>
+                <div class="chip ${isFav ? 'good' : ''}">${isFav ? '❤️ Favorit' : '🤍 Ej favorit'}</div>
+              </div>
+              <div class="item-sub" style="margin-top:10px">${escapeHtml((p.description||'').slice(0,140))}${(p.description||'').length>140?'…':''}</div>
+              <div class="item-actions">
+                <button class="btn btn-soft" onclick="openProduct(${p.id})">Visa</button>
+                <button class="btn btn-soft" onclick="toggleFavorite(${p.id}, null);">${isFav ? 'Ta bort favorit' : 'Favoritmarkera'}</button>
+                ${rightBtns}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* FILTERS */
+    function setCat(cat, el){
+      activeCat = cat;
+      document.querySelectorAll('.cat').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      applyFilters();
+    }
+
+    function applyFilters(){
+      const q = document.getElementById('q').value.trim().toLowerCase();
+      const loc = document.getElementById('loc').value;
+      const price = document.getElementById('price').value;
+
+      let list = products.slice();
+      if (activeCat !== 'all') list = list.filter(p => p.category === activeCat);
+      if (q) list = list.filter(p => p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+      if (loc) list = list.filter(p => p.location === loc);
+
+      if (price){
+        list = list.filter(p => {
+          if (price === '0-100') return p.price <= 100;
+          if (price === '100-500') return p.price > 100 && p.price <= 500;
+          if (price === '500-1000') return p.price > 500 && p.price <= 1000;
+          if (price === '1000+') return p.price > 1000;
+          return true;
+        });
+      }
+
+      renderProducts(list);
+    }
+
+    /* PRODUCTS */
+    function renderProducts(list = products){
+      const grid = document.getElementById('products');
+      const empty = document.getElementById('empty');
+
+      if (!list.length){
         grid.innerHTML = '';
         empty.classList.add('show');
         return;
       }
-
       empty.classList.remove('show');
-      grid.innerHTML = filtered.map(p => `
-        <div class="product-card" onclick="openProduct(${p.id})">
-          <div class="product-image-wrapper">
-            <img src="${p.image}" class="product-image" alt="${p.title}" loading="lazy">
-            <div class="location-tag">📍 ${p.location}</div>
-            <button class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite(this)">❤️</button>
-          </div>
-          <div class="product-body">
-            <div class="product-header">
-              <h3 class="product-title">${p.title}</h3>
-              <div class="product-price">${p.price} kr</div>
+
+      grid.innerHTML = list.map(p => {
+        const fav = isFavorited(p.id);
+        return `
+          <div class="product-card" onclick="openProduct(${p.id})">
+            <div class="img-wrap">
+              <img src="${p.images[0]}" alt="${escapeHtml(p.title)}" loading="lazy" />
+              <div class="tag">📍 ${escapeHtml(p.location)}</div>
+              <button class="fav ${fav ? 'active' : ''}" aria-label="Favorit" onclick="event.stopPropagation(); toggleFavorite(${p.id}, this)">${fav ? '❤️' : '🤍'}</button>
             </div>
-            <div class="product-footer">
-              <div class="seller-info">
-                <div class="seller-avatar">${p.sellerAvatar}</div>
-                <span class="seller-name">${p.seller}</span>
+            <div class="product-body">
+              <div class="p-top">
+                <div class="p-title">${escapeHtml(p.title)}</div>
+                <div class="p-price">${p.price} kr</div>
               </div>
-              <span class="product-date">${p.date}</span>
+              <div class="p-meta">
+                <div class="seller">
+                  <div class="seller-badge">${escapeHtml(p.sellerAvatar)}</div>
+                  <span>${escapeHtml(p.seller)}</span>
+                </div>
+                <span>${escapeHtml(p.date)}</span>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
-    // Filter Functions
-    function filterProducts() {
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const location = document.getElementById('locationFilter').value;
-      const price = document.getElementById('priceFilter').value;
-
-      let filtered = products.filter(p => {
-        const matchSearch = p.title.toLowerCase().includes(search) || p.category.toLowerCase().includes(search);
-        const matchLocation = !location || p.location === location;
-        let matchPrice = true;
-
-        if (price) {
-          if (price === '0-100') matchPrice = p.price <= 100;
-          else if (price === '100-500') matchPrice = p.price > 100 && p.price <= 500;
-          else if (price === '500-1000') matchPrice = p.price > 500 && p.price <= 1000;
-          else if (price === '1000+') matchPrice = p.price > 1000;
-        }
-
-        return matchSearch && matchLocation && matchPrice;
-      });
-
-      renderProducts(filtered);
-    }
-
-    function filterCategory(cat, btn) {
-      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      if (cat === 'all') {
-        renderProducts();
-      } else {
-        const filtered = products.filter(p => p.category === cat);
-        renderProducts(filtered);
-      }
-    }
-
-    // Modal Functions
-    function openProduct(id) {
+    function openProduct(id){
       currentProduct = products.find(p => p.id === id);
       if (!currentProduct) return;
 
-      document.getElementById('modalImage').src = currentProduct.image;
-      document.getElementById('modalTitle').textContent = currentProduct.title;
-      document.getElementById('modalPrice').textContent = currentProduct.price + ' kr';
-      document.getElementById('modalLocation').textContent = currentProduct.location;
-      document.getElementById('modalDate').textContent = 'Publicerad ' + currentProduct.date;
-      document.getElementById('modalDescription').textContent = currentProduct.description;
-      document.getElementById('modalSeller').textContent = currentProduct.seller;
-      document.getElementById('modalSellerAvatar').textContent = currentProduct.sellerAvatar;
+      pmIdx = 0;
+      document.getElementById('pmTitle').textContent = currentProduct.title;
+      document.getElementById('pmPrice').textContent = currentProduct.price + ' kr';
+      document.getElementById('pmMeta').textContent = '📍 ' + currentProduct.location + ' • ' + currentProduct.date;
 
-      document.getElementById('productModal').classList.add('show');
-      document.body.style.overflow = 'hidden';
+      document.getElementById('pmSeller').textContent = currentProduct.seller;
+      document.getElementById('pmSellerAva').textContent = currentProduct.sellerAvatar;
+      document.getElementById('pmSellerLine').textContent = 'Annons: ' + currentProduct.short;
+      document.getElementById('pmDesc').textContent = currentProduct.description;
+
+      syncModalFavoriteButton();
+      renderProductImages();
+      show('productModal');
     }
 
-    function closeProductModal() {
-      document.getElementById('productModal').classList.remove('show');
-      document.body.style.overflow = '';
+    function syncModalFavoriteButton(){
+      const btn = document.getElementById('pmFavBtn');
+      const fav = currentProduct ? isFavorited(currentProduct.id) : false;
+      btn.textContent = fav ? '❤️ Favoritmarkerad' : '🤍 Favorit';
+      btn.classList.toggle('btn-danger', fav);
+      btn.classList.toggle('btn-soft', !fav);
     }
 
-    function openSellModal() {
-      document.getElementById('sellModal').classList.add('show');
-      document.body.style.overflow = 'hidden';
+    function renderProductImages(){
+      const main = document.getElementById('pmImg');
+      const thumbs = document.getElementById('pmThumbs');
+      const imgs = currentProduct.images || [];
+      pmIdx = Math.max(0, Math.min(pmIdx, imgs.length - 1));
+      main.src = imgs[pmIdx];
+      thumbs.innerHTML = imgs.map((src, idx) => `
+        <img src="${src}" class="${idx === pmIdx ? 'active' : ''}" onclick="setPmImg(${idx})" alt="" />
+      `).join('');
     }
 
-    function closeSellModal() {
-      document.getElementById('sellModal').classList.remove('show');
-      document.body.style.overflow = '';
+    function setPmImg(idx){ pmIdx = idx; renderProductImages(); }
+    function closeProduct(){ hide('productModal'); }
+
+    /* FAVORITES */
+    function loadFavorites(){
+      const user = getUser();
+      if (!user) return [];
+      return loadJSON(favKey(user.id), []);
     }
 
-    function closeModal(event) {
-      if (event.target === event.currentTarget) {
-        event.target.classList.remove('show');
-        document.body.style.overflow = '';
-      }
+    function saveFavorites(ids){
+      const user = getUser();
+      if (!user) return;
+      saveJSON(favKey(user.id), ids);
     }
 
-    function publishAd() {
-      const title = document.getElementById('sellTitle').value;
-      const price = document.getElementById('sellPrice').value;
-      const category = document.getElementById('sellCategory').value;
-      const location = document.getElementById('sellLocation').value;
-      const description = document.getElementById('sellDescription').value;
+    function isFavorited(productId){
+      const user = getUser();
+      if (!user) return false;
+      const ids = loadFavorites();
+      return ids.includes(productId);
+    }
 
-      if (!title || !price) {
-        alert('Fyll i titel och pris');
+    function toggleFavorite(productId, btn){
+      const user = getUser();
+      if (!user){
+        toast('Du måste ha konto för att favoritmarkera.');
+        openAuth('signup');
         return;
       }
 
-      const newProduct = {
-        id: products.length + 1,
-        title,
-        price: parseInt(price, 10),
-        category,
-        location,
-        image: "https://images.unsplash.com/photo-1566004100631-35d015d6a491?w=800&auto=format&fit=crop",
-        seller: "Jag",
-        sellerAvatar: "JD",
-        date: "Just nu",
-        description
-      };
+      let ids = loadFavorites();
+      const willBeFav = !ids.includes(productId);
 
-      products.unshift(newProduct);
-      renderProducts();
-      closeSellModal();
-
-      document.getElementById('sellTitle').value = '';
-      document.getElementById('sellPrice').value = '';
-      document.getElementById('sellDescription').value = '';
-
-      alert('Din annons har publicerats!');
-    }
-
-    // ---------- Chat Functions (fixed) ----------
-    function showMessages() {
-      document.getElementById('chatOverlay').classList.add('show');
-      document.getElementById('chatPage').classList.add('show');
-      document.getElementById('chatPage').setAttribute('aria-hidden', 'false');
-
-      // For desktop, no need to lock scroll. For mobile fullscreen, lock.
-      if (window.innerWidth <= 768) document.body.style.overflow = 'hidden';
-      ensureChatLayout();
-    }
-
-    function closeChatPanel() {
-      document.getElementById('chatOverlay').classList.remove('show');
-      document.getElementById('chatPage').classList.remove('show');
-      document.getElementById('chatPage').setAttribute('aria-hidden', 'true');
-
-      // reset
-      document.body.style.overflow = '';
-      backToList(true); // reset chat state
-    }
-
-    function showHome() {
-      // Keep backward compatibility with your existing calls
-      closeChatPanel();
-    }
-
-    function ensureChatLayout() {
-      // If chat open, adjust layout depending on screen
-      const isMobile = window.innerWidth <= 768;
-
-      if (isMobile) {
-        // On mobile, sidebar is list, main shows only when active
-        if (currentChat) {
-          document.querySelector('.chat-sidebar').style.display = 'none';
-          document.getElementById('chatMain').classList.add('active');
-        } else {
-          document.querySelector('.chat-sidebar').style.display = 'flex';
-          document.getElementById('chatMain').classList.remove('active');
-        }
+      if (willBeFav){
+        ids.push(productId);
+        toast('Sparad som favorit!');
       } else {
-        // On desktop, always show both columns inside panel
-        document.querySelector('.chat-sidebar').style.display = 'flex';
-        document.getElementById('chatMain').classList.add('active');
+        ids = ids.filter(id => id !== productId);
+        toast('Borttagen från favoriter.');
+      }
+      saveFavorites(ids);
+
+      // Update UI bits
+      if (btn){
+        btn.classList.toggle('active', willBeFav);
+        btn.textContent = willBeFav ? '❤️' : '🤍';
+      }
+      if (currentProduct && currentProduct.id === productId){
+        syncModalFavoriteButton();
+      }
+
+      refreshProfileStats();
+      applyFilters();
+
+      if (!document.getElementById('profilePage').classList.contains('hidden')){
+        const favTabActive = document.getElementById('tabFav').classList.contains('active');
+        if (favTabActive) setProfileTab('fav');
       }
     }
 
-    function renderConversations() {
-      const list = document.getElementById('conversationsList');
-      list.innerHTML = conversations.map(c => `
-        <div class="conversation-item ${c.unread ? 'unread' : ''} ${currentChat && currentChat.id === c.id ? 'active' : ''}"
-             onclick="openChat(${c.id})">
-          <div class="conversation-avatar">${c.avatar}</div>
-          <div class="conversation-content">
-            <div class="conversation-top">
-              <span class="conversation-name">${c.with}</span>
-              <span class="conversation-time">${c.time}</span>
+    function toggleFavoriteFromModal(){
+      if (!currentProduct) return;
+      toggleFavorite(currentProduct.id, null);
+      syncModalFavoriteButton();
+    }
+
+    function unfavorite(productId){
+      const user = getUser();
+      if (!user) return;
+      let ids = loadFavorites();
+      ids = ids.filter(id => id !== productId);
+      saveFavorites(ids);
+      refreshProfileStats();
+      applyFilters();
+    }
+
+    /* PUBLIC SELLER PROFILE */
+    function openSellerProfileFromModal(){
+      if (!currentProduct) return;
+      openSellerProfile(currentProduct.seller, currentProduct.sellerAvatar);
+    }
+
+    function openSellerProfile(sellerName, avatar){
+      document.getElementById('sellerTitle').textContent = 'Profil: ' + sellerName;
+      document.getElementById('sellerName').textContent = sellerName;
+      document.getElementById('sellerAva').textContent = avatar || initials(sellerName);
+
+      const ads = products.filter(p => p.seller === sellerName);
+      const box = document.getElementById('sellerAds');
+
+      if (!ads.length){
+        box.innerHTML = `<div class="panel panel-pad"><div class="muted">Inga annonser hittades.</div></div>`;
+      } else {
+        box.innerHTML = ads.map(p => `
+          <div class="panel panel-pad">
+            <div class="item">
+              <img class="thumb" src="${p.images?.[0] || ''}" alt="" />
+              <div class="item-main">
+                <div class="item-title">${escapeHtml(p.title)}</div>
+                <div class="item-sub">${p.price} kr • ${escapeHtml(p.location)}</div>
+                <div class="item-actions">
+                  <button class="btn btn-soft" onclick="hide('sellerModal'); openProduct(${p.id});">Visa</button>
+                  <button class="btn btn-primary" onclick="hide('sellerModal'); openProduct(${p.id}); messageSeller();">Skriv</button>
+                </div>
+              </div>
             </div>
-            <div class="conversation-product">${c.product}</div>
-            <div class="conversation-preview">${c.lastMessage}</div>
           </div>
-          ${c.unread ? '<div class="unread-indicator"></div>' : ''}
+        `).join('');
+      }
+
+      show('sellerModal');
+    }
+
+    /* SELL */
+    function openSell(){
+      const user = getUser();
+      if (!user){
+        toast('Skapa konto / logga in för att kunna sälja.');
+        openAuth('signup');
+        return;
+      }
+      resetSellForm();
+      show('sellModal');
+    }
+
+    function closeSell(){ hide('sellModal'); }
+
+    function wireSellUpload(){
+      const input = document.getElementById('sImgs');
+      input.addEventListener('change', async () => {
+        sellImgs = [];
+        const files = Array.from(input.files || []).slice(0,6);
+        if (!files.length){ renderSellPreview(); return; }
+        try{
+          const urls = await Promise.all(files.map(fileToDataUrl));
+          sellImgs = urls;
+          renderSellPreview();
+        } catch {
+          sellImgs = [];
+          toast('Kunde inte läsa en eller flera bilder.');
+          renderSellPreview();
+        }
+      });
+    }
+
+    function renderSellPreview(){
+      const grid = document.getElementById('sPreview');
+      grid.innerHTML = sellImgs.map((src, idx) => `
+        <div class="preview-item">
+          <img src="${src}" alt="" />
+          <button onclick="removeSellImg(${idx})" title="Ta bort">✕</button>
         </div>
       `).join('');
     }
 
-    function openChat(id) {
+    function removeSellImg(idx){ sellImgs.splice(idx, 1); renderSellPreview(); }
+
+    function publish(){
+      const user = getUser();
+      if (!user){
+        toast('Logga in för att publicera annons.');
+        openAuth('login');
+        return;
+      }
+
+      const title = document.getElementById('sTitle').value.trim();
+      const priceRaw = document.getElementById('sPrice').value;
+      const category = document.getElementById('sCat').value;
+      const location = document.getElementById('sLoc').value;
+      const description = document.getElementById('sDesc').value.trim();
+
+      if (!title || !priceRaw) return toast('Fyll i titel och pris.');
+      const price = parseInt(priceRaw, 10);
+      if (!Number.isFinite(price) || price < 0) return toast('Pris måste vara ett giltigt nummer.');
+      if (sellImgs.length < 1) return toast('Lägg till minst 1 bild.');
+
+      const newP = {
+        id: nextId(products),
+        title,
+        short: title.length > 22 ? title.slice(0,22) + '…' : title,
+        price,
+        category,
+        location,
+        images: [...sellImgs],
+        seller: user.name,
+        sellerAvatar: initials(user.name),
+        userId: user.id,
+        date: 'Just nu',
+        description: description || 'Ingen beskrivning.'
+      };
+
+      products.unshift(newP);
+      saveJSON(LS_PRODUCTS, products);
+      hide('sellModal');
+      toast('Annons publicerad!');
+      applyFilters();
+
+      refreshProfileStats();
+      if (!document.getElementById('profilePage').classList.contains('hidden')) setProfileTab('ads');
+    }
+
+    function resetSellForm(){
+      document.getElementById('sTitle').value = '';
+      document.getElementById('sPrice').value = '';
+      document.getElementById('sDesc').value = '';
+      document.getElementById('sLoc').value = 'Stockholm';
+      document.getElementById('sCat').value = 'leksaker';
+      document.getElementById('sImgs').value = '';
+      sellImgs = [];
+      renderSellPreview();
+    }
+
+    /* CHAT */
+    function loadUserData(){
+      const user = getUser();
+      if (!user){
+        conversations = [];
+        currentChat = null;
+        renderConversations();
+        updateBadge();
+        return;
+      }
+      conversations = loadJSON(convKey(user.id), []);
+      saveJSON(convKey(user.id), conversations);
+      currentChat = null;
+      renderConversations();
+      updateBadge();
+    }
+
+    function saveConversations(){
+      const user = getUser();
+      if (!user) return;
+      saveJSON(convKey(user.id), conversations);
+      updateBadge();
+      refreshProfileStats();
+    }
+
+    function openChatPanel(){
+      const user = getUser();
+      if (!user){
+        toast('Logga in för att använda chatten.');
+        openAuth('login');
+        return;
+      }
+      show('chatOverlay');
+      show('chat');
+      document.getElementById('chat').setAttribute('aria-hidden','false');
+      ensureChatLayout();
+      renderConversations();
+    }
+
+    function closeChatPanel(){
+      hide('chatOverlay');
+      hide('chat');
+      document.getElementById('chat').setAttribute('aria-hidden','true');
+      backToConversations();
+    }
+
+    function isChatOpen(){ return document.getElementById('chat').classList.contains('show'); }
+
+    function ensureChatLayout(){
+      const isMobile = window.innerWidth <= 768;
+      const main = document.getElementById('chatMain');
+      if (isMobile){
+        if (currentChat) main.classList.add('active');
+        else main.classList.remove('active');
+      } else {
+        main.classList.add('active');
+      }
+    }
+
+    function renderConversations(){
+      const list = document.getElementById('convList');
+      const user = getUser();
+
+      if (!user){
+        list.innerHTML = `<div style="padding:12px" class="muted">Logga in för att se konversationer.</div>`;
+        return;
+      }
+
+      if (!conversations.length){
+        list.innerHTML = `<div style="padding:12px" class="muted">Inga konversationer än.</div>`;
+        return;
+      }
+
+      list.innerHTML = conversations.map(c => `
+        <div class="conv ${currentChat && currentChat.id === c.id ? 'active' : ''}" onclick="openChat(${c.id})">
+          <div class="seller-badge">${escapeHtml(c.avatar)}</div>
+          <div style="min-width:0;flex:1">
+            <div style="display:flex;justify-content:space-between;gap:6px">
+              <div class="n">${escapeHtml(c.with)}</div>
+              <div class="t">${escapeHtml(c.time)}</div>
+            </div>
+            <div class="p">${escapeHtml(c.product)} • ${escapeHtml(c.lastMessage)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openChat(id){
       currentChat = conversations.find(c => c.id === id);
       if (!currentChat) return;
 
-      currentChat.unread = false;
+      hideEl('chatEmpty');
+      showEl('chatActive');
 
-      document.getElementById('emptyChat').style.display = 'none';
-      document.getElementById('activeChat').style.display = 'flex';
-      document.getElementById('chatName').textContent = currentChat.with;
-      document.getElementById('chatAvatar').textContent = currentChat.avatar;
+      document.getElementById('chatWith').textContent = currentChat.with;
+      document.getElementById('chatAva').textContent = currentChat.avatar;
 
       renderMessages();
       renderConversations();
-      updateBadge();
       ensureChatLayout();
     }
 
-    function backToList(reset = false) {
-      // desktop: "go back" to list; mobile: go back from active chat to list
-      if (reset) currentChat = null;
-
-      if (window.innerWidth <= 768) {
-        document.querySelector('.chat-sidebar').style.display = 'flex';
-        document.getElementById('chatMain').classList.remove('active');
-      }
-
-      if (!reset) {
-        currentChat = null;
-      }
-
-      document.getElementById('activeChat').style.display = 'none';
-      document.getElementById('emptyChat').style.display = 'flex';
+    function backToConversations(){
+      currentChat = null;
+      showEl('chatEmpty');
+      hideEl('chatActive');
       renderConversations();
       ensureChatLayout();
     }
 
-    function renderMessages() {
-      const container = document.getElementById('chatMessages');
-      container.innerHTML = currentChat.messages.map(m => `
-        <div class="message ${m.sent ? 'sent' : 'received'}">
-          ${m.text}
-          <div class="message-time">${m.time}</div>
+    function renderMessages(){
+      const box = document.getElementById('msgs');
+      if (!currentChat){ box.innerHTML = ''; return; }
+      box.innerHTML = currentChat.messages.map(m => `
+        <div class="msg ${m.sent ? 'sent' : 'recv'}">
+          ${escapeHtml(m.text)}
+          <div class="time">${escapeHtml(m.time)}</div>
         </div>
       `).join('');
-      container.scrollTop = container.scrollHeight;
+      box.scrollTop = box.scrollHeight;
     }
 
-    function handleEnter(e) {
-      if (e.key === 'Enter') sendMessage();
-    }
+    function onEnter(e){ if (e.key === 'Enter') sendMsg(); }
 
-    function sendMessage() {
-      const input = document.getElementById('messageInput');
+    function sendMsg(){
+      if (!currentChat) return;
+      const input = document.getElementById('msgIn');
       const text = input.value.trim();
-      if (!text || !currentChat) return;
+      if (!text) return;
 
-      const now = new Date();
-      const time = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2, '0');
-
-      currentChat.messages.push({ text, sent: true, time });
+      const t = timeNow();
+      currentChat.messages.push({ text, sent: true, time: t });
       currentChat.lastMessage = text;
-      currentChat.time = time;
-
+      currentChat.time = t;
       input.value = '';
+
+      saveConversations();
       renderMessages();
       renderConversations();
 
-      // Simulate reply (give reply its own timestamp)
-      setTimeout(() => {
+      setTimeout(()=>{
         const replies = [
-          "Hej! Visst, den är kvar. När vill du hämta?",
-          "Tack för ditt intresse! Jag kan sänka priset lite om du hämtar idag.",
-          "Perfekt! Jag skickar adressen i PM.",
-          "Bilden är från förra veckan, den är i fint skick!"
+          'Hej! Ja, den finns kvar 😊',
+          'Absolut! När vill du hämta?',
+          'Toppen — jag kan mötas upp i eftermiddag.',
+          'Jag kan sänka lite om du hämtar idag.'
         ];
-        const reply = replies[Math.floor(Math.random() * replies.length)];
-        const now2 = new Date();
-        const time2 = String(now2.getHours()).padStart(2,'0') + ':' + String(now2.getMinutes()).padStart(2, '0');
-
-        currentChat.messages.push({ text: reply, sent: false, time: time2 });
-        currentChat.lastMessage = reply;
-        currentChat.time = time2;
-
+        const r = replies[Math.floor(Math.random()*replies.length)];
+        const t2 = timeNow();
+        currentChat.messages.push({ text: r, sent: false, time: t2 });
+        currentChat.lastMessage = r;
+        currentChat.time = t2;
+        saveConversations();
         renderMessages();
         renderConversations();
-        updateBadge();
-      }, 1200);
+      }, 900);
     }
 
-    function startChatFromModal() {
-      closeProductModal();
+    function updateBadge(){
+      const b = document.getElementById('msgBadge');
+      const user = getUser();
+      if (!user){ b.style.display='none'; return; }
+      const count = conversations.length;
+      if (count > 0){ b.textContent = count; b.style.display='flex'; }
+      else b.style.display='none';
+    }
+
+    function messageSeller(){
+      const user = getUser();
+      if (!user){
+        toast('Logga in eller skapa konto för att skriva till säljaren.');
+        openAuth('login');
+        return;
+      }
       if (!currentProduct) return;
+      if (currentProduct.userId === user.id){
+        toast('Det här är din egen annons.');
+        return;
+      }
 
-      // IMPORTANT FIX: use productId to avoid duplicates
       let conv = conversations.find(c => c.productId === currentProduct.id);
-
-      if (!conv) {
+      if (!conv){
         conv = {
-          id: conversations.length ? Math.max(...conversations.map(x => x.id)) + 1 : 1,
+          id: nextId(conversations),
           productId: currentProduct.id,
           with: currentProduct.seller,
           avatar: currentProduct.sellerAvatar,
-          product: currentProduct.title,
-          lastMessage: "Hej! Jag är intresserad av " + currentProduct.title,
-          time: "Nyss",
-          unread: false,
+          product: currentProduct.short,
+          lastMessage: 'Hej! Jag är intresserad av ' + currentProduct.short,
+          time: 'Nyss',
           messages: [
-            { text: "Hej! Jag är intresserad av " + currentProduct.title, sent: true, time: "Nyss" }
+            { text: 'Hej! Jag är intresserad av ' + currentProduct.short, sent: true, time: 'Nyss' }
           ]
         };
         conversations.unshift(conv);
+        saveConversations();
       }
 
-      showMessages();
+      hide('productModal');
+      openChatPanel();
       openChat(conv.id);
     }
 
-    function toggleFavorite(btn) {
-      btn.classList.toggle('active');
+    /* MODALS */
+    function closeOnBackdrop(e){ if (e.target === e.currentTarget) hide(e.currentTarget.id); }
+    function closeAllModals(){ ['productModal','authModal','sellModal','sellerModal'].forEach(hide); }
+
+    function show(id){ document.getElementById(id).classList.add('show'); document.body.style.overflow = 'hidden'; }
+    function hide(id){ document.getElementById(id).classList.remove('show'); document.body.style.overflow = ''; }
+
+    function showEl(id){ document.getElementById(id).classList.remove('hidden'); }
+    function hideEl(id){ document.getElementById(id).classList.add('hidden'); }
+
+    /* TOAST */
+    function toast(msg){
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(window.__toastT);
+      window.__toastT = setTimeout(()=> t.classList.remove('show'), 2400);
     }
 
-    function updateBadge() {
-      const unread = conversations.filter(c => c.unread).length;
-      const badge = document.getElementById('msgBadge');
-      if (unread > 0) {
-        badge.textContent = unread;
-        badge.style.display = 'flex';
-      } else {
-        badge.style.display = 'none';
-      }
+    /* UTILS */
+    function initials(name){
+      const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return '??';
+      const a = parts[0][0] || '';
+      const b = parts.length > 1 ? (parts[parts.length-1][0] || '') : (parts[0][1] || '');
+      return (a + b).toUpperCase();
     }
 
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        // close modals
-        document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
-        document.body.style.overflow = '';
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#039;');
+    }
 
-        // close chat panel if open
-        const chatOpen = document.getElementById('chatPage').classList.contains('show');
-        if (chatOpen) closeChatPanel();
-      }
-    });
+    function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    function uid(){ return 'u_' + Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+    function nextId(arr){ return arr.length ? Math.max(...arr.map(x => x.id)) + 1 : 1; }
+
+    function loadJSON(key, fallback){
+      try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+      catch{ return fallback; }
+    }
+
+    function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject)=>{
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(new Error('read error'));
+        r.readAsDataURL(file);
+      });
+    }
+
+    function timeNow(){
+      const d = new Date();
+      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+
+    /* SEED */
+    function seedProducts(){
+      return [
+        {
+          id: 1,
+          title: 'Bugaboo Cameleon 3 - Svart',
+          short: 'Bugaboo Cameleon 3',
+          price: 2500,
+          category: 'barnvagn',
+          location: 'Stockholm',
+          images: [
+            'https://images.unsplash.com/photo-1566004100631-35d015d6a491?w=1200&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1520975916090-3105956dac38?w=1200&auto=format&fit=crop'
+          ],
+          seller: 'Anna S.',
+          sellerAvatar: 'AS',
+          userId: 'seed_anna',
+          date: 'Idag',
+          description: 'Väl-skött Bugaboo Cameleon 3 i svart färg. Inkluderar liggdel, sittdel och regnskydd. Rökfritt hem.'
+        },
+        {
+          id: 2,
+          title: 'Britax Max-Way Bilbarnstol 9-25kg',
+          short: 'Britax Bilbarnstol',
+          price: 1200,
+          category: 'bilbarnstol',
+          location: 'Göteborg',
+          images: [
+            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1520975958221-34b7b7a5f4ac?w=1200&auto=format&fit=crop'
+          ],
+          seller: 'Johan P.',
+          sellerAvatar: 'JP',
+          userId: 'seed_johan',
+          date: 'Igår',
+          description: 'Säker och bekväm stol. Aldrig varit med om olycka. Instruktioner ingår.'
+        },
+        {
+          id: 3,
+          title: 'LEGO Duplo Stor Låda - 100+ bitar',
+          short: 'LEGO Duplo',
+          price: 350,
+          category: 'leksaker',
+          location: 'Malmö',
+          images: [
+            'https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?w=1200&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=1200&auto=format&fit=crop'
+          ],
+          seller: 'Maria L.',
+          sellerAvatar: 'ML',
+          userId: 'seed_maria',
+          date: '2 dagar sedan',
+          description: 'Stor samling LEGO Duplo. Alla bitar hela och rena. Perfekt för 1–5 år.'
+        },
+        {
+          id: 4,
+          title: 'IKEA Sundvik Spjälsäng med madrass',
+          short: 'IKEA Sundvik',
+          price: 800,
+          category: 'möbler',
+          location: 'Uppsala',
+          images: [
+            'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&auto=format&fit=crop'
+          ],
+          seller: 'Erik N.',
+          sellerAvatar: 'EN',
+          userId: 'seed_erik',
+          date: '3 dagar sedan',
+          description: 'Vit spjälsäng med justerbar botten. Madrass ingår. Mindre skav men stabil.'
+        },
+        {
+          id: 5,
+          title: 'Polarn O. Pyret Vinteroverall 92cl',
+          short: 'Vinteroverall 92',
+          price: 450,
+          category: 'kläder',
+          location: 'Stockholm',
+          images: [
+            'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=1200&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&auto=format&fit=crop'
+          ],
+          seller: 'Sofia K.',
+          sellerAvatar: 'SK',
+          userId: 'seed_sofia',
+          date: 'Idag',
+          description: 'Varm och skön overall. Använd en säsong. Reflexdetaljer.'
+        }
+      ];
+    }
   </script>
 </body>
 </html>
