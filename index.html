@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miniblocket - Köp & sälj barnsaker</title>
+    <style>
+        /* Reset & Base */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f0f9ff;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+       
+        /* Layout */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+       
+        /* Navigation */
+        nav {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #38bdf8, #2563eb);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        .logo-text h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+        .logo-text p {
+            font-size: 12px;
+            color: #64748b;
+            margin: 0;
+            font-weight: 600;
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #38bdf8, #2563eb);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #64748b;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .btn-icon:hover {
+            background: #e0f2fe;
+            color: #0284c7;
+        }
+        .badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ef4444;
+            color: white;
+            font-size: 11px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fb923c, #ec4899);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+       
+        /* Search & Filter */
+        .search-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 24px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .search-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .search-input-wrapper {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+        .search-input-wrapper::before {
+            content: "🔍";
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px 16px 12px 48px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+        }
+        select {
+            padding-left: 16px;
+            min-width: 150px;
+            cursor: pointer;
+        }
+        .categories {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .category-btn {
+            padding: 8px 20px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 600;
+            color: #475569;
+            transition: all 0.3s;
+        }
+        .category-btn:hover {
+            border-color: #38bdf8;
+            color: #0284c7;
+        }
+        .category-btn.active {
+            background: #e0f2fe;
+            border-color: #38bdf8;
+            color: #0284c7;
+        }
+       
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        .product-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+        .product-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+        .product-body {
+            padding: 16px;
+        }
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .product-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .product-price {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0284c7;
+            white-space: nowrap;
+            margin-left: 8px;
+        }
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .seller-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .seller-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .seller-name {
+            font-size: 14px;
+            color: #64748b;
+        }
+        .product-date {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .location-tag {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(255,255,255,0.95);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .favorite-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #94a3b8;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .favorite-btn:hover, .favorite-btn.active {
+            color: #ef4444;
+            transform: scale(1.1);
+        }
+        .product-image-wrapper {
+            position: relative;
+        }
+       
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            display: none;
+        }
+        .empty-state.show {
+            display: block;
+        }
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+        .empty-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        .empty-text {
+            color: #94a3b8;
+        }
+       
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideIn 0.3s;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .modal-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0 0 8px 0;
+        }
+        .modal-price {
+            font-size: 32px;
+            font-weight: 800;
+            color: #0284c7;
+        }
+        .modal-meta {
+            text-align: right;
+            color: #64748b;
+        }
+        .seller-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 16px;
+            margin: 24px 0;
+        }
+        .seller-card .avatar {
+            width: 56px;
+            height: 56px;
+            font-size: 20px;
+        }
+        .seller-details h4 {
+            margin: 0 0 4px 0;
+            font-size: 18px;
+        }
+        .seller-rating {
+            color: #f59e0b;
+            font-size: 14px;
+        }
+        .modal-description {
+            margin: 24px 0;
+            line-height: 1.8;
+            color: #475569;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn-large {
+            flex: 1;
+            padding: 16px 24px;
+            font-size: 18px;
+            justify-content: center;
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+       
+        /* Chat Page */
+        .chat-page {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 200;
+        }
+        .chat-page.show {
+            display: flex;
+        }
+        .chat-sidebar {
+            width: 350px;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .conversation-item {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .conversation-item:hover {
+            background: white;
+        }
+        .conversation-item.active {
+            background: #e0f2fe;
+        }
+        .conversation-item.unread {
+            background: #f0f9ff;
+        }
+        .conversation-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #34d399, #3b82f6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .conversation-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .conversation-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .conversation-name {
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .conversation-time {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .conversation-product {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .conversation-preview {
+            font-size: 14px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .conversation-item.unread .conversation-preview {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .unread-indicator {
+            width: 8px;
+            height: 8px;
+            background: #38bdf8;
+            border-radius: 50%;
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
+            animation: messageSlide 0.3s;
+        }
+        @keyframes messageSlide {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.sent {
+            align-self: flex-end;
+            background: #38bdf8;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.received {
+            align-self: flex-start;
+            background: white;
+            color: #1e293b;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .message-time {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+        .chat-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+        }
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        .chat-input:focus {
+            border-color: #38bdf8;
+        }
+        .btn-send {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #38bdf8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .btn-send:hover {
+            background: #0284c7;
+            transform: scale(1.05);
+        }
+        .chat-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+        }
+        .chat-empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+       
+        /* Sell Modal Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+        .image-upload {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .image-upload:hover {
+            border-color: #38bdf8;
+            background: #f0f9ff;
+        }
+       
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 12px;
+            }
+            .product-image {
+                height: 160px;
+            }
+            .chat-sidebar {
+                width: 100%;
+            }
+            .chat-main:not(.active) {
+                display: none;
+            }
+            .modal-content {
+                margin: 0;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+       
+        /* Utilities */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container nav-content">
+            <a href="#" class="logo" onclick="showHome(); return false;">
+                <div class="logo-icon">👶</div>
+                <div class="logo-text">
+                    <h1>Miniblocket</h1>
+                    <p>Bara barnsaker</p>
+                </div>
+            </a>
+           
+            <div class="nav-actions">
+                <button class="btn-icon" onclick="showMessages()" title="Meddelanden">
+                    💬
+                    <span class="badge" id="msgBadge">2</span>
+                </button>
+                <button class="btn btn-primary" onclick="openSellModal()">
+                    <span>+</span> Sälj
+                </button>
+                <div class="avatar">JD</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container" id="homePage">
+       
+        <!-- Search & Filter -->
+        <div class="search-section">
+            <div class="search-row">
+                <div class="search-input-wrapper">
+                    <input type="text" id="searchInput" placeholder="Sök efter leksaker, barnvagnar..." onkeyup="filterProducts()">
+                </div>
+                <select id="locationFilter" onchange="filterProducts()" style="padding-left: 16px;">
+                    <option value="">📍 Alla platser</option>
+                    <option value="Stockholm">Stockholm</option>
+                    <option value="Göteborg">Göteborg</option>
+                    <option value="Malmö">Malmö</option>
+                    <option value="Uppsala">Uppsala</option>
+                </select>
+                <select id="priceFilter" onchange="filterProducts()" style="padding-left: 16px;">
+                    <option value="">💰 Pris</option>
+                    <option value="0-100">0 - 100 kr</option>
+                    <option value="100-500">100 - 500 kr</option>
+                    <option value="500-1000">500 - 1000 kr</option>
+                    <option value="1000+">1000+ kr</option>
+                </select>
+            </div>
+           
+            <div class="categories">
+                <button class="category-btn active" onclick="filterCategory('all', this)">Allt</button>
+                <button class="category-btn" onclick="filterCategory('leksaker', this)">🧸 Leksaker</button>
+                <button class="category-btn" onclick="filterCategory('barnvagn', this)">🍼 Barnvagnar</button>
+                <button class="category-btn" onclick="filterCategory('bilbarnstol', this)">🚗 Bilbarnstolar</button>
+                <button class="category-btn" onclick="filterCategory('kläder', this)">👕 Kläder</button>
+                <button class="category-btn" onclick="filterCategory('möbler', this)">🛏️ Barnmöbler</button>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="productsGrid" class="products-grid"></div>
+       
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-title">Inga annonser hittades</div>
+            <div class="empty-text">Prova att ändra dina filter eller sökord</div>
+        </div>
+    </div>
+
+    <!-- Chat/Messages Page -->
+    <div id="chatPage" class="chat-page">
+        <div class="chat-sidebar">
+            <div class="chat-header">
+                <h2>💬 Meddelanden</h2>
+                <button class="btn-icon" onclick="showHome()" style="display: none;" id="mobileCloseChat">✕</button>
+            </div>
+            <div class="conversations-list" id="conversationsList"></div>
+        </div>
+       
+        <div class="chat-main" id="chatMain">
+            <div class="chat-empty" id="emptyChat">
+                <div class="chat-empty-icon">💬</div>
+                <p>Välj en konversation för att börja chatta</p>
+            </div>
+           
+            <div id="activeChat" style="display: none; flex-direction: column; height: 100%;">
+                <div class="chat-header">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="conversation-avatar" id="chatAvatar">AS</div>
+                        <div>
+                            <div style="font-weight: 700;" id="chatName">Anna S.</div>
+                            <div style="font-size: 13px; color: #10b981;">🟢 Aktiv nu</div>
+                        </div>
+                    </div>
+                    <button class="btn-icon" onclick="closeChatMobile()" id="closeChatMobile">✕</button>
+                </div>
+               
+                <div class="chat-messages" id="chatMessages"></div>
+               
+                <div class="chat-input-area">
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="messageInput" placeholder="Skriv ett meddelande..." onkeypress="handleEnter(event)">
+                        <button class="btn-send" onclick="sendMessage()">➤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="productModal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeProductModal()">✕</button>
+            <img id="modalImage" src="" class="modal-image" alt="">
+           
+            <div class="modal-body">
+                <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title" id="modalTitle"></h2>
+                        <div class="modal-price" id="modalPrice"></div>
+                    </div>
+                    <div class="modal-meta">
+                        <div>📍 <span id="modalLocation"></span></div>
+                        <div style="font-size: 14px; margin-top: 4px;" id="modalDate"></div>
+                    </div>
+                </div>
+               
+                <div class="seller-card">
+                    <div class="avatar" id="modalSellerAvatar" style="background: linear-gradient(135deg, #a855f7, #ec4899);">AS</div>
+                    <div class="seller-details">
+                        <h4 id="modalSeller">Anna S.</h4>
+                        <div class="seller-rating">⭐⭐⭐⭐⭐ (12)</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="startChatFromModal()" style="margin-left: auto;">
+                        💬 Skriv till säljare
+                    </button>
+                </div>
+               
+                <div class="modal-description">
+                    <h3 style="margin-bottom: 12px; color: #1e293b;">Beskrivning</h3>
+                    <p id="modalDescription" style="color: #475569; line-height: 1.8;"></p>
+                </div>
+               
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0;">
+                    <div style="background: #f0fdf4; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
+                        <div style="font-size: 13px; font-weight: 600; color: #166534;">Fungerar perfekt</div>
+                    </div>
+                    <div style="background: #eff6ff; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🛡️</div>
+                        <div style="font-size: 13px; font-weight: 600; color: #1e40af;">Säker betalning</div>
+                    </div>
+                    <div style="background: #fdf2f8; padding: 16px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">♻️</div>
+                        <div style="font-size: 13px; font-weight: 600; color: #9d174d;">Hållbart köp</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sell Modal -->
+    <div id="sellModal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
+            <div style="padding: 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0; font-size: 24px;">Lägg till annons</h2>
+                <button class="btn-icon" onclick="closeSellModal()" style="position: static;">✕</button>
+            </div>
+           
+            <div style="padding: 24px;">
+                <div class="form-group">
+                    <label>Titel</label>
+                    <input type="text" id="sellTitle" placeholder="t.ex. Bugaboo Cameleon 3" style="padding-left: 16px;">
+                </div>
+               
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Pris (kr)</label>
+                        <input type="number" id="sellPrice" placeholder="0" style="padding-left: 16px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="sellCategory" style="padding-left: 16px;">
+                            <option value="leksaker">Leksaker</option>
+                            <option value="barnvagn">Barnvagn</option>
+                            <option value="bilbarnstol">Bilbarnstol</option>
+                            <option value="kläder">Kläder</option>
+                            <option value="möbler">Möbler</option>
+                        </select>
+                    </div>
+                </div>
+               
+                <div class="form-group">
+                    <label>Plats</label>
+                    <select id="sellLocation" style="padding-left: 16px;">
+                        <option value="Stockholm">Stockholm</option>
+                        <option value="Göteborg">Göteborg</option>
+                        <option value="Malmö">Malmö</option>
+                        <option value="Uppsala">Uppsala</option>
+                    </select>
+                </div>
+               
+                <div class="form-group">
+                    <label>Beskrivning</label>
+                    <textarea id="sellDescription" placeholder="Beskriv varan..."></textarea>
+                </div>
+               
+                <div class="form-group">
+                    <label>Bilder</label>
+                    <div class="image-upload" onclick="alert('I en riktig app skulle du kunna ladda upp bilder här!')">
+                        <div style="font-size: 48px; margin-bottom: 12px;">📷</div>
+                        <div style="color: #64748b;">Klicka för att ladda upp bilder</div>
+                    </div>
+                </div>
+            </div>
+           
+            <div style="padding: 24px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px;">
+                <button class="btn btn-secondary" onclick="closeSellModal()" style="flex: 1;">Avbryt</button>
+                <button class="btn btn-primary" onclick="publishAd()" style="flex: 1;">Publicera</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        const products = [
+            {
+                id: 1,
+                title: "Bugaboo Cameleon 3 - Svart",
+                price: 2500,
+                category: "barnvagn",
+                location: "Stockholm",
+                image: "https://images.unsplash.com/photo-1566004100631-35d015d6a491?w=800&auto=format&fit=crop",
+                seller: "Anna S.",
+                sellerAvatar: "AS",
+                date: "Idag",
+                description: "Väl-skött Bugaboo Cameleon 3 i svart färg. Köpt 2019 men fortfarande i mycket gott skick. Inkluderar liggdel, sittdel, regnskydd och åkpåse. Rökfritt hem. Kan mötas upp i centrala Stockholm eller skickas med frakt."
+            },
+            {
+                id: 2,
+                title: "Britax Max-Way Bilbarnstol 9-25kg",
+                price: 1200,
+                category: "bilbarnstol",
+                location: "Göteborg",
+                image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&auto=format&fit=crop",
+                seller: "Johan P.",
+                sellerAvatar: "JP",
+                date: "Igår",
+                description: "Säker och bekväm bilbarnstol från Britax. ISOFIX-fäste. Aldrig varit med om olycka. Passar barn 9-25 kg. Monteringsanvisningar ingår."
+            },
+            {
+                id: 3,
+                title: "LEGO Duplo Stor Låda - 100+ bitar",
+                price: 350,
+                category: "leksaker",
+                location: "Malmö",
+                image: "https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?w=800&auto=format&fit=crop",
+                seller: "Maria L.",
+                sellerAvatar: "ML",
+                date: "2 dagar sedan",
+                description: "Stor samling LEGO Duplo i blandade färger. Alla bitar hela och rena. Perfekt för barn 1-5 år. Säljs i stor plåtlåda."
+            },
+            {
+                id: 4,
+                title: "IKEA Sundvik Spjälsäng med madrass",
+                price: 800,
+                category: "möbler",
+                location: "Uppsala",
+                image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&auto=format&fit=crop",
+                seller: "Erik N.",
+                sellerAvatar: "EN",
+                date: "3 dagar sedan",
+                description: "Vit spjälsäng från IKEA med justerbar botten. Inkluderar skummadrass och sängkläder om så önskas. Lite skrapad på ena sidan men fungerar perfekt."
+            },
+            {
+                id: 5,
+                title: "Polarn O. Pyret Vinteroverall 92cl",
+                price: 450,
+                category: "kläder",
+                location: "Stockholm",
+                image: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=800&auto=format&fit=crop",
+                seller: "Sofia K.",
+                sellerAvatar: "SK",
+                date: "Idag",
+                description: "Varm och skön vinteroverall från POP. Använd en säsong, fortfarande i fint skick. Blå färg med reflexdetaljer."
+            },
+            {
+                id: 6,
+                title: "BabyBjörn Bärsele One Air",
+                price: 900,
+                category: "leksaker",
+                location: "Göteborg",
+                image: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&auto=format&fit=crop",
+                seller: "Lisa M.",
+                sellerAvatar: "LM",
+                date: "Igår",
+                description: "Luftig bärsele i mesh-material. Perfekt för sommaren. Använd fåtal gånger. Alla instruktioner och förpackning finns kvar."
+            }
+        ];
+
+        let conversations = [
+            {
+                id: 1,
+                with: "Anna S.",
+                avatar: "AS",
+                product: "Bugaboo Cameleon 3",
+                lastMessage: "Hej! Är vagnen fortfarande till salu?",
+                time: "10:30",
+                unread: true,
+                messages: [
+                    { text: "Hej! Är vagnen fortfarande till salu?", sent: false, time: "10:30" }
+                ]
+            },
+            {
+                id: 2,
+                with: "Johan P.",
+                avatar: "JP",
+                product: "Britax Bilbarnstol",
+                lastMessage: "Tack för snabb affär!",
+                time: "Igår",
+                unread: false,
+                messages: [
+                    { text: "Hej, är stolen kvar?", sent: true, time: "Igår 14:20" },
+                    { text: "Ja den är kvar! När kan du hämta?", sent: false, time: "Igår 14:25" },
+                    { text: "Tack för snabb affär!", sent: false, time: "Igår 16:00" }
+                ]
+            }
+        ];
+
+        let currentChat = null;
+        let currentProduct = null;
+
+        // Initialize
+        window.onload = function() {
+            renderProducts();
+            renderConversations();
+        };
+
+        // Render Products
+        function renderProducts(filtered = products) {
+            const grid = document.getElementById('productsGrid');
+            const empty = document.getElementById('emptyState');
+           
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.add('show');
+                return;
+            }
+           
+            empty.classList.remove('show');
+            grid.innerHTML = filtered.map(p => `
+                <div class="product-card" onclick="openProduct(${p.id})">
+                    <div class="product-image-wrapper">
+                        <img src="${p.image}" class="product-image" alt="${p.title}" loading="lazy">
+                        <div class="location-tag">📍 ${p.location}</div>
+                        <button class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite(this)">❤️</button>
+                    </div>
+                    <div class="product-body">
+                        <div class="product-header">
+                            <h3 class="product-title">${p.title}</h3>
+                            <div class="product-price">${p.price} kr</div>
+                        </div>
+                        <div class="product-footer">
+                            <div class="seller-info">
+                                <div class="seller-avatar">${p.sellerAvatar}</div>
+                                <span class="seller-name">${p.seller}</span>
+                            </div>
+                            <span class="product-date">${p.date}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter Functions
+        function filterProducts() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const location = document.getElementById('locationFilter').value;
+            const price = document.getElementById('priceFilter').value;
+           
+            let filtered = products.filter(p => {
+                const matchSearch = p.title.toLowerCase().includes(search) || p.category.toLowerCase().includes(search);
+                const matchLocation = !location || p.location === location;
+                let matchPrice = true;
+               
+                if (price) {
+                    if (price === '0-100') matchPrice = p.price <= 100;
+                    else if (price === '100-500') matchPrice = p.price > 100 && p.price <= 500;
+                    else if (price === '500-1000') matchPrice = p.price > 500 && p.price <= 1000;
+                    else if (price === '1000+') matchPrice = p.price > 1000;
+                }
+               
+                return matchSearch && matchLocation && matchPrice;
+            });
+           
+            renderProducts(filtered);
+        }
+
+        function filterCategory(cat, btn) {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+           
+            if (cat === 'all') {
+                renderProducts();
+            } else {
+                const filtered = products.filter(p => p.category === cat);
+                renderProducts(filtered);
+            }
+        }
+
+        // Modal Functions
+        function openProduct(id) {
+            currentProduct = products.find(p => p.id === id);
+            if (!currentProduct) return;
+           
+            document.getElementById('modalImage').src = currentProduct.image;
+            document.getElementById('modalTitle').textContent = currentProduct.title;
+            document.getElementById('modalPrice').textContent = currentProduct.price + ' kr';
+            document.getElementById('modalLocation').textContent = currentProduct.location;
+            document.getElementById('modalDate').textContent = 'Publicerad ' + currentProduct.date;
+            document.getElementById('modalDescription').textContent = currentProduct.description;
+            document.getElementById('modalSeller').textContent = currentProduct.seller;
+            document.getElementById('modalSellerAvatar').textContent = currentProduct.sellerAvatar;
+           
+            document.getElementById('productModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function openSellModal() {
+            document.getElementById('sellModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSellModal() {
+            document.getElementById('sellModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function closeModal(event) {
+            if (event.target === event.currentTarget) {
+                event.target.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function publishAd() {
+            const title = document.getElementById('sellTitle').value;
+            const price = document.getElementById('sellPrice').value;
+            const category = document.getElementById('sellCategory').value;
+            const location = document.getElementById('sellLocation').value;
+            const description = document.getElementById('sellDescription').value;
+           
+            if (!title || !price) {
+                alert('Fyll i titel och pris');
+                return;
+            }
+           
+            const newProduct = {
+                id: products.length + 1,
+                title,
+                price: parseInt(price),
+                category,
+                location,
+                image: "https://images.unsplash.com/photo-1566004100631-35d015d6a491?w=800&auto=format&fit=crop",
+                seller: "Jag",
+                sellerAvatar: "JD",
+                date: "Just nu",
+                description
+            };
+           
+            products.unshift(newProduct);
+            renderProducts();
+            closeSellModal();
+           
+            // Reset form
+            document.getElementById('sellTitle').value = '';
+            document.getElementById('sellPrice').value = '';
+            document.getElementById('sellDescription').value = '';
+           
+            alert('Din annons har publicerats!');
+        }
+
+        // Chat Functions
+        function showMessages() {
+            document.getElementById('chatPage').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function showHome() {
+            document.getElementById('chatPage').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function renderConversations() {
+            const list = document.getElementById('conversationsList');
+            list.innerHTML = conversations.map(c => `
+                <div class="conversation-item ${c.unread ? 'unread' : ''}" onclick="openChat(${c.id})">
+                    <div class="conversation-avatar">${c.avatar}</div>
+                    <div class="conversation-content">
+                        <div class="conversation-top">
+                            <span class="conversation-name">${c.with}</span>
+                            <span class="conversation-time">${c.time}</span>
+                        </div>
+                        <div class="conversation-product">${c.product}</div>
+                        <div class="conversation-preview">${c.lastMessage}</div>
+                    </div>
+                    ${c.unread ? '<div class="unread-indicator"></div>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function openChat(id) {
+            currentChat = conversations.find(c => c.id === id);
+            if (!currentChat) return;
+           
+            currentChat.unread = false;
+           
+            document.getElementById('emptyChat').style.display = 'none';
+            document.getElementById('activeChat').style.display = 'flex';
+            document.getElementById('chatName').textContent = currentChat.with;
+            document.getElementById('chatAvatar').textContent = currentChat.avatar;
+           
+            renderMessages();
+            renderConversations();
+            updateBadge();
+           
+            // Mobile
+            if (window.innerWidth <= 768) {
+                document.querySelector('.chat-sidebar').style.display = 'none';
+                document.getElementById('chatMain').classList.add('active');
+            }
+        }
+
+        function closeChatMobile() {
+            if (window.innerWidth <= 768) {
+                document.querySelector('.chat-sidebar').style.display = 'flex';
+                document.getElementById('chatMain').classList.remove('active');
+                document.getElementById('activeChat').style.display = 'none';
+                document.getElementById('emptyChat').style.display = 'flex';
+            }
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = currentChat.messages.map(m => `
+                <div class="message ${m.sent ? 'sent' : 'received'}">
+                    ${m.text}
+                    <div class="message-time">${m.time}</div>
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !currentChat) return;
+           
+            const now = new Date();
+            const time = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+           
+            currentChat.messages.push({ text, sent: true, time });
+            currentChat.lastMessage = text;
+            currentChat.time = time;
+           
+            input.value = '';
+            renderMessages();
+            renderConversations();
+           
+            // Simulate reply
+            setTimeout(() => {
+                const replies = [
+                    "Hej! Visst, den är kvar. När vill du hämta?",
+                    "Tack för ditt intresse! Jag kan sänka priset lite om du hämtar idag.",
+                    "Perfekt! Jag skickar adressen i PM.",
+                    "Bilden är från förra veckan, den är i fint skick!"
+                ];
+                const reply = replies[Math.floor(Math.random() * replies.length)];
+                currentChat.messages.push({ text: reply, sent: false, time: time });
+                currentChat.lastMessage = reply;
+                renderMessages();
+                renderConversations();
+            }, 2000);
+        }
+
+        function startChatFromModal() {
+            closeProductModal();
+           
+            let conv = conversations.find(c => c.product === currentProduct.title);
+            if (!conv) {
+                conv = {
+                    id: conversations.length + 1,
+                    with: currentProduct.seller,
+                    avatar: currentProduct.sellerAvatar,
+                    product: currentProduct.title,
+                    lastMessage: "Hej! Jag är intresserad av " + currentProduct.title,
+                    time: "Nyss",
+                    unread: false,
+                    messages: [
+                        { text: "Hej! Jag är intresserad av " + currentProduct.title, sent: true, time: "Nyss" }
+                    ]
+                };
+                conversations.unshift(conv);
+            }
+           
+            showMessages();
+            setTimeout(() => openChat(conv.id), 100);
+        }
+
+        function toggleFavorite(btn) {
+            btn.classList.toggle('active');
+        }
+
+        function updateBadge() {
+            const unread = conversations.filter(c => c.unread).length;
+            const badge = document.getElementById('msgBadge');
+            if (unread > 0) {
+                badge.textContent = unread;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
+                document.body.style.overflow = '';
+            }
+        });
+    </script>
+</body>
+</html>
