@@ -2,207 +2,1373 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Miniblocket</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto;background:#f0f9ff;color:#0f172a;line-height:1.5}
-    :root{--b:#38bdf8;--b2:#2563eb;--mut:#64748b;--line:#e2e8f0;--soft:#f1f5f9;--soft2:#f8fafc}
+    :root{
+      --primary:#0ea5e9;
+      --primary-dark:#0284c7;
+      --primary-light:#e0f2fe;
+      --secondary:#8b5cf6;
+      --accent:#f59e0b;
+      --danger:#ef4444;
+      --success:#10b981;
+      --bg:#f8fafc;
+      --surface:#ffffff;
+      --text:#0f172a;
+      --text-secondary:#64748b;
+      --border:#e2e8f0;
+      --shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-xl:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+      --radius:16px;
+      --radius-sm:12px;
+    }
+    
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    
+    body{
+      font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+      background:linear-gradient(135deg,#f0f9ff 0%,#f8fafc 50%,#fff1f2 100%);
+      background-attachment:fixed;
+      color:var(--text);
+      line-height:1.6;
+      min-height:100vh;
+    }
+    
     .container{max-width:1200px;margin:auto;padding:0 20px}
     .hidden{display:none!important}
 
-    nav{position:sticky;top:0;z-index:100;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.10)}
-    .nav{display:flex;justify-content:space-between;align-items:center;height:70px;gap:10px}
-    .brand{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
-    .logo{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(135deg,var(--b),var(--b2));font-size:22px}
-    .brand strong{font-size:18px}
-    .brand small{display:block;font-size:12px;color:var(--mut);font-weight:900;margin-top:2px}
+    /* Navigation - Glassmorphism */
+    nav{
+      position:sticky;
+      top:0;
+      z-index:100;
+      background:rgba(255,255,255,0.85);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-bottom:1px solid rgba(226,232,240,0.6);
+      box-shadow:var(--shadow-sm);
+    }
+    
+    .nav{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      height:72px;
+      gap:12px;
+    }
+    
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      cursor:pointer;
+      user-select:none;
+      transition:transform 0.2s;
+    }
+    
+    .brand:active{transform:scale(0.98)}
+    
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%);
+      font-size:24px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    
+    .logo::after{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(135deg,transparent 0%,rgba(255,255,255,0.3) 100%);
+    }
+    
+    .brand strong{
+      font-size:20px;
+      font-weight:800;
+      background:linear-gradient(135deg,var(--text) 0%,var(--text-secondary) 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+    
+    .brand small{
+      display:block;
+      font-size:11px;
+      color:var(--text-secondary);
+      font-weight:600;
+      letter-spacing:0.5px;
+      text-transform:uppercase;
+    }
 
-    .nav-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-    .btn{padding:10px 16px;border:none;border-radius:999px;cursor:pointer;font-weight:900;font-size:14px;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
-    .btn-primary{background:linear-gradient(135deg,var(--b),var(--b2));color:#fff}
-    .btn-soft{background:var(--soft);color:#334155}
-    .btn-danger{background:#fee2e2;color:#991b1b}
-    .btn-icon{width:40px;height:40px;border-radius:50%;border:none;background:var(--soft);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#334155;position:relative}
-    .badge{position:absolute;top:-3px;right:-3px;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:1000;display:flex;align-items:center;justify-content:center}
-    .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#fb923c,#ec4899);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:1000;cursor:pointer;user-select:none}
+    .nav-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    
+    .btn{
+      padding:10px 18px;
+      border:none;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+      transition:all 0.2s;
+      position:relative;
+      overflow:hidden;
+    }
+    
+    .btn::after{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(135deg,transparent 0%,rgba(255,255,255,0.2) 100%);
+      opacity:0;
+      transition:opacity 0.2s;
+    }
+    
+    .btn:hover::after{opacity:1}
+    .btn:active{transform:translateY(1px)}
+    
+    .btn-primary{
+      background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+      color:#fff;
+      box-shadow:0 4px 14px 0 rgba(14,165,233,0.35);
+    }
+    
+    .btn-primary:hover{
+      box-shadow:0 6px 20px 0 rgba(14,165,233,0.45);
+      transform:translateY(-1px);
+    }
+    
+    .btn-soft{
+      background:var(--surface);
+      color:var(--text-secondary);
+      border:1px solid var(--border);
+    }
+    
+    .btn-soft:hover{
+      background:var(--bg);
+      color:var(--text);
+      border-color:var(--primary);
+    }
+    
+    .btn-danger{
+      background:linear-gradient(135deg,#fee2e2 0%,#fecaca 100%);
+      color:#991b1b;
+      border:1px solid #fecaca;
+    }
+    
+    .btn-danger:hover{
+      background:linear-gradient(135deg,#fecaca 0%,#fca5a5 100%);
+    }
+    
+    .btn-success{
+      background:linear-gradient(135deg,var(--success) 0%,#059669 100%);
+      color:#fff;
+      box-shadow:0 4px 14px 0 rgba(16,185,129,0.35);
+    }
+    
+    .btn-icon{
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      border:none;
+      background:var(--surface);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:20px;
+      color:var(--text-secondary);
+      position:relative;
+      box-shadow:var(--shadow-sm);
+      transition:all 0.2s;
+      border:1px solid var(--border);
+    }
+    
+    .btn-icon:hover{
+      transform:translateY(-2px);
+      box-shadow:var(--shadow);
+      color:var(--primary);
+    }
+    
+    .badge{
+      position:absolute;
+      top:-4px;
+      right:-4px;
+      min-width:20px;
+      height:20px;
+      border-radius:10px;
+      background:var(--danger);
+      color:#fff;
+      font-size:11px;
+      font-weight:800;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0 6px;
+      box-shadow:0 2px 4px rgba(239,68,68,0.3);
+      border:2px solid #fff;
+    }
+    
+    .avatar{
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      background:linear-gradient(135deg,#fb923c,#ec4899);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      cursor:pointer;
+      user-select:none;
+      box-shadow:var(--shadow);
+      border:2px solid rgba(255,255,255,0.8);
+      transition:transform 0.2s;
+    }
+    
+    .avatar:hover{transform:scale(1.05) rotate(5deg)}
 
-    .page{padding:22px 0}
-    .search-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-    .search-row{display:flex;gap:10px;flex-wrap:wrap}
-    .search-input{flex:1;min-width:240px;position:relative}
-    .search-input:before{content:"🔍";position:absolute;left:14px;top:50%;transform:translateY(-50%)}
-    input,select,textarea{width:100%;padding:12px 14px;border:2px solid var(--line);border-radius:12px;outline:none;font-size:14px;background:#fff}
-    .search-input input{padding-left:42px}
+    .page{padding:28px 0}
+    
+    /* Search Card - Glass effect */
+    .search-card{
+      background:rgba(255,255,255,0.9);
+      backdrop-filter:blur(10px);
+      border:1px solid rgba(226,232,240,0.6);
+      border-radius:var(--radius);
+      padding:24px;
+      box-shadow:var(--shadow-lg);
+      margin-bottom:24px;
+    }
+    
+    .search-row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:stretch;
+    }
+    
+    .search-input{
+      flex:1;
+      min-width:260px;
+      position:relative;
+    }
+    
+    .search-input::before{
+      content:"🔍";
+      position:absolute;
+      left:16px;
+      top:50%;
+      transform:translateY(-50%);
+      font-size:18px;
+      opacity:0.5;
+    }
+    
+    input,select,textarea{
+      width:100%;
+      padding:14px 16px;
+      border:2px solid var(--border);
+      border-radius:var(--radius-sm);
+      outline:none;
+      font-size:15px;
+      background:var(--surface);
+      transition:all 0.2s;
+      font-family:inherit;
+    }
+    
+    input:focus,select:focus,textarea:focus{
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px rgba(14,165,233,0.1);
+    }
+    
+    .search-input input{padding-left:48px}
 
-    .cats{display:flex;gap:8px;overflow-x:auto;padding-top:12px}
-    .cat{border:2px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-weight:1000;color:#334155;cursor:pointer;white-space:nowrap}
-    .cat.active{background:#e0f2fe;border-color:var(--b);color:#0369a1}
+    .cats{
+      display:flex;
+      gap:10px;
+      overflow-x:auto;
+      padding-top:16px;
+      padding-bottom:4px;
+      scrollbar-width:none;
+      -ms-overflow-style:none;
+    }
+    
+    .cats::-webkit-scrollbar{display:none}
+    
+    .cat{
+      border:2px solid var(--border);
+      background:var(--surface);
+      border-radius:999px;
+      padding:10px 20px;
+      font-weight:600;
+      color:var(--text-secondary);
+      cursor:pointer;
+      white-space:nowrap;
+      transition:all 0.2s;
+      box-shadow:var(--shadow-sm);
+    }
+    
+    .cat:hover{
+      border-color:var(--primary);
+      color:var(--primary);
+      transform:translateY(-1px);
+    }
+    
+    .cat.active{
+      background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+      border-color:transparent;
+      color:#fff;
+      box-shadow:0 4px 12px rgba(14,165,233,0.35);
+    }
 
-    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin-top:18px}
-    .card{background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;transition:.2s}
-    .card:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(0,0,0,.12)}
-    .img-wrap{position:relative}
-    .card img{width:100%;height:200px;object-fit:cover;display:block;background:var(--line)}
-    .tag{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);padding:6px 10px;border-radius:999px;font-size:12px;font-weight:1000;color:#334155}
-    .fav{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:999px;border:1px solid rgba(226,232,240,.9);background:rgba(255,255,255,.95);box-shadow:0 2px 8px rgba(0,0,0,.12);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px}
-    .fav.active{background:#fee2e2;border-color:#fecaca;color:#ef4444}
-    .body{padding:14px}
-    .p-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-    .p-title{font-weight:1000;font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-    .p-price{font-weight:1000;color:#0369a1;white-space:nowrap}
-    .p-meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;color:var(--mut);font-size:12px}
-    .seller{display:flex;align-items:center;gap:8px}
-    .seller-badge{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#34d399,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:1000;font-size:12px}
+    /* Products Grid */
+    .products{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+      gap:24px;
+      margin-top:24px;
+    }
+    
+    .card{
+      background:var(--surface);
+      border-radius:var(--radius);
+      overflow:hidden;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      cursor:pointer;
+      transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position:relative;
+    }
+    
+    .card:hover{
+      transform:translateY(-4px);
+      box-shadow:var(--shadow-xl);
+      border-color:var(--primary-light);
+    }
+    
+    .card.sold{
+      opacity:0.7;
+      pointer-events:none;
+      filter:grayscale(0.6);
+    }
+    
+    .card.sold::after{
+      content:'SÅLD';
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%) rotate(-15deg);
+      background:var(--danger);
+      color:#fff;
+      padding:12px 32px;
+      font-size:24px;
+      font-weight:900;
+      border-radius:8px;
+      box-shadow:var(--shadow-xl);
+      z-index:10;
+      letter-spacing:2px;
+    }
+    
+    .img-wrap{
+      position:relative;
+      overflow:hidden;
+    }
+    
+    .card img{
+      width:100%;
+      height:220px;
+      object-fit:cover;
+      display:block;
+      background:var(--bg);
+      transition:transform 0.3s;
+    }
+    
+    .card:hover img{transform:scale(1.05)}
+    
+    .tag{
+      position:absolute;
+      top:12px;
+      left:12px;
+      background:rgba(255,255,255,0.95);
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      color:var(--text);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(4px);
+    }
+    
+    .fav{
+      position:absolute;
+      top:12px;
+      right:12px;
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      border:none;
+      background:rgba(255,255,255,0.95);
+      box-shadow:var(--shadow);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:20px;
+      transition:all 0.2s;
+      z-index:5;
+    }
+    
+    .fav:hover{
+      transform:scale(1.1);
+      background:#fff;
+    }
+    
+    .fav.active{
+      background:#fee2e2;
+      color:var(--danger);
+    }
+    
+    .body{padding:18px}
+    
+    .p-top{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+      margin-bottom:8px;
+    }
+    
+    .p-title{
+      font-weight:700;
+      font-size:15px;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+      line-height:1.4;
+      color:var(--text);
+    }
+    
+    .p-price{
+      font-weight:800;
+      font-size:18px;
+      color:var(--primary-dark);
+      white-space:nowrap;
+    }
+    
+    .p-meta{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:14px;
+      padding-top:14px;
+      border-top:1px solid var(--border);
+      color:var(--text-secondary);
+      font-size:13px;
+      font-weight:500;
+    }
+    
+    .seller{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    
+    .seller-badge{
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      background:linear-gradient(135deg,var(--success),var(--primary));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      font-weight:700;
+      font-size:12px;
+      box-shadow:var(--shadow-sm);
+    }
 
-    .empty{display:none;text-align:center;padding:50px 10px;color:var(--mut)}
+    .empty{
+      display:none;
+      text-align:center;
+      padding:60px 20px;
+      color:var(--text-secondary);
+    }
+    
     .empty.show{display:block}
+    
+    .empty-icon{
+      font-size:64px;
+      opacity:0.3;
+      margin-bottom:16px;
+    }
 
-    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:1000;padding:16px}
-    .modal.show{display:flex}
-    .box{background:#fff;border-radius:18px;width:100%;max-width:760px;max-height:92vh;overflow:auto;box-shadow:0 18px 40px rgba(0,0,0,.18)}
-    .head{padding:18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .head h3{font-size:18px}
-    .x{width:36px;height:36px;border-radius:50%;border:none;background:var(--soft);cursor:pointer;font-weight:1000}
-    .pad{padding:18px}
+    /* Modals */
+    .modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,0.6);
+      backdrop-filter:blur(4px);
+      align-items:center;
+      justify-content:center;
+      z-index:1000;
+      padding:20px;
+      opacity:0;
+      transition:opacity 0.3s;
+    }
+    
+    .modal.show{
+      display:flex;
+      opacity:1;
+    }
+    
+    .box{
+      background:var(--surface);
+      border-radius:var(--radius);
+      width:100%;
+      max-width:800px;
+      max-height:92vh;
+      overflow:auto;
+      box-shadow:var(--shadow-xl);
+      transform:scale(0.95);
+      transition:transform 0.3s;
+      border:1px solid var(--border);
+    }
+    
+    .modal.show .box{transform:scale(1)}
+    
+    .head{
+      padding:24px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      position:sticky;
+      top:0;
+      background:var(--surface);
+      z-index:10;
+    }
+    
+    .head h3{font-size:20px;font-weight:800}
+    
+    .x{
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      border:none;
+      background:var(--bg);
+      cursor:pointer;
+      font-weight:700;
+      font-size:18px;
+      color:var(--text-secondary);
+      transition:all 0.2s;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    
+    .x:hover{
+      background:var(--danger);
+      color:#fff;
+      transform:rotate(90deg);
+    }
+    
+    .pad{padding:24px}
 
-    .pm-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
-    .pm-img{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--line)}
-    .pm-img img{width:100%;height:360px;object-fit:cover;display:block}
-    .thumbs{display:flex;gap:8px;overflow-x:auto;padding-top:10px}
-    .thumbs img{width:70px;height:54px;object-fit:cover;border-radius:12px;border:2px solid transparent;cursor:pointer;background:var(--line)}
-    .thumbs img.active{border-color:var(--b)}
-    .pm-title{font-weight:1100;font-size:20px}
-    .pm-price{font-weight:1100;font-size:22px;color:#0369a1;margin-top:4px}
-    .pm-meta{margin-top:10px;color:#475569;font-weight:900;font-size:13px}
+    /* Product Detail */
+    .pm-grid{
+      display:grid;
+      grid-template-columns:1.2fr 0.8fr;
+      gap:24px;
+    }
+    
+    .pm-img{
+      border-radius:var(--radius);
+      overflow:hidden;
+      border:1px solid var(--border);
+      background:var(--bg);
+      position:relative;
+    }
+    
+    .pm-img img{
+      width:100%;
+      height:400px;
+      object-fit:cover;
+      display:block;
+    }
+    
+    .thumbs{
+      display:flex;
+      gap:12px;
+      overflow-x:auto;
+      padding-top:16px;
+      scrollbar-width:thin;
+    }
+    
+    .thumbs img{
+      width:80px;
+      height:64px;
+      object-fit:cover;
+      border-radius:12px;
+      border:3px solid transparent;
+      cursor:pointer;
+      background:var(--bg);
+      transition:all 0.2s;
+    }
+    
+    .thumbs img.active{
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px rgba(14,165,233,0.1);
+    }
+    
+    .pm-title{
+      font-weight:800;
+      font-size:24px;
+      line-height:1.3;
+      color:var(--text);
+    }
+    
+    .pm-price{
+      font-weight:800;
+      font-size:28px;
+      color:var(--primary-dark);
+      margin-top:8px;
+    }
+    
+    .pm-meta{
+      margin-top:12px;
+      color:var(--text-secondary);
+      font-weight:500;
+      font-size:14px;
+      display:flex;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
     .seller-card{
-  margin-top:14px;
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:14px;
-  background:var(--soft2);
+      margin-top:20px;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:20px;
+      background:linear-gradient(135deg,var(--bg) 0%,var(--surface) 100%);
+      display:flex;
+      gap:16px;
+      align-items:center;
+      flex-wrap:wrap;
+      box-shadow:var(--shadow-sm);
+    }
+    
+    .seller-card .seller-badge{
+      width:52px;
+      height:52px;
+      font-size:16px;
+      flex-shrink:0;
+    }
+    
+    .seller-card .seller-info-wrap{flex:1;min-width:200px}
+    
+    .seller-card .btn{
+      margin-left:auto;
+      position:static;
+    }
 
-  /* robust layout: no overlap, wraps nicely */
-  display:flex;
-  gap:12px;
-  align-items:center;
-  flex-wrap:wrap;
+    .action-buttons{
+      display:flex;
+      gap:12px;
+      margin-top:20px;
+      flex-wrap:wrap;
+    }
+    
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 14px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--surface);
+      font-weight:600;
+      font-size:13px;
+      color:var(--text-secondary);
+      box-shadow:var(--shadow-sm);
+    }
+    
+    .chip.good{
+      background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);
+      border-color:#a7f3d0;
+      color:#065f46;
+    }
 
-  /* enable container queries for the CTA wrap */
-  container-type:inline-size;
-}
-.seller-card .seller-badge{width:44px;height:44px;font-size:14px}
-.seller-card .seller-info-wrap{flex:1;min-width:180px;min-width:0}
-.seller-card .btn{
-  margin-left:auto;
-  position:static !important;
-  right:auto !important;
-  top:auto !important;
-}
+    /* Profile Layout */
+    .profile-layout{
+      display:grid;
+      grid-template-columns:360px 1fr;
+      gap:24px;
+      align-items:start;
+    }
+    
+    .panel{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    
+    .panel-pad{padding:24px}
+    
+    .profile-banner{
+      height:100px;
+      background:linear-gradient(135deg,rgba(14,165,233,0.2) 0%,rgba(139,92,246,0.2) 100%);
+      position:relative;
+      overflow:hidden;
+    }
+    
+    .profile-banner::after{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    
+    .profile-top{
+      padding:0 24px 24px;
+      display:flex;
+      gap:16px;
+      align-items:flex-end;
+      margin-top:-40px;
+      position:relative;
+      z-index:2;
+    }
+    
+    .profile-avatar{
+      width:80px;
+      height:80px;
+      border-radius:20px;
+      background:linear-gradient(135deg,#fb923c,#ec4899);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      font-weight:800;
+      font-size:24px;
+      border:4px solid var(--surface);
+      box-shadow:var(--shadow-lg);
+      overflow:hidden;
+      flex-shrink:0;
+    }
+    
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      padding:0 24px 24px;
+    }
+    
+    .stat{
+      border:1px solid var(--border);
+      border-radius:var(--radius-sm);
+      padding:16px;
+      background:var(--bg);
+      text-align:center;
+      transition:all 0.2s;
+    }
+    
+    .stat:hover{
+      transform:translateY(-2px);
+      box-shadow:var(--shadow);
+      border-color:var(--primary-light);
+    }
+    
+    .stat .n{
+      font-weight:800;
+      font-size:22px;
+      color:var(--primary-dark);
+    }
+    
+    .stat .l{
+      font-size:12px;
+      color:var(--text-secondary);
+      font-weight:600;
+      margin-top:4px;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+    }
 
-/* if the card is narrow, make the CTA a full row */
-@container (max-width: 360px){
-  .seller-card .btn{width:100%;margin-left:0;justify-content:center}
-}
+    .seg{
+      display:flex;
+      gap:8px;
+      padding:6px;
+      background:var(--bg);
+      border:1px solid var(--border);
+      border-radius:999px;
+      margin-bottom:20px;
+    }
+    
+    .seg button{
+      flex:1;
+      border:none;
+      background:transparent;
+      padding:12px 16px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:700;
+      color:var(--text-secondary);
+      transition:all 0.2s;
+      font-size:14px;
+    }
+    
+    .seg button:hover{color:var(--text)}
+    
+    .seg button.active{
+      background:var(--surface);
+      color:var(--primary);
+      box-shadow:var(--shadow);
+      border:1px solid var(--border);
+    }
 
-.stars{display:inline-flex;gap:2px;align-items:center;font-weight:1100}
-.star{font-size:14px;line-height:1}
-.star.muted{opacity:.25}
-.review{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
-.review .meta{display:flex;justify-content:space-between;gap:10px;color:var(--mut);font-weight:1000;font-size:12px;margin-top:6px}
-.review-form{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--soft2)}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-weight:1000;font-size:12px;color:#334155}
-    .chip.good{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+    .list{
+      margin-top:16px;
+      display:grid;
+      gap:16px;
+    }
+    
+    .item{
+      display:flex;
+      gap:16px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+      padding:16px;
+      background:var(--bg);
+      border-radius:var(--radius-sm);
+      border:1px solid var(--border);
+      transition:all 0.2s;
+    }
+    
+    .item:hover{
+      border-color:var(--primary-light);
+      box-shadow:var(--shadow);
+    }
+    
+    .thumb{
+      width:140px;
+      height:100px;
+      border-radius:var(--radius-sm);
+      border:1px solid var(--border);
+      object-fit:cover;
+      background:var(--bg);
+      flex-shrink:0;
+    }
+    
+    .item-main{flex:1;min-width:200px}
+    
+    .item-title{
+      font-weight:700;
+      font-size:16px;
+      color:var(--text);
+      margin-bottom:4px;
+    }
+    
+    .item-sub{
+      color:var(--text-secondary);
+      font-weight:500;
+      font-size:13px;
+    }
+    
+    .item-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
 
-    .profile-layout{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
-    .panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-    .panel-pad{padding:16px}
-    .profile-banner{height:70px;background:linear-gradient(135deg,rgba(56,189,248,.35),rgba(37,99,235,.25))}
-    .profile-top{padding:14px 16px 16px 16px;display:flex;gap:12px;align-items:center}
-    .profile-avatar{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#fb923c,#ec4899);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:1100;font-size:18px;margin-top:-28px;border:3px solid #fff;box-shadow:0 10px 20px rgba(0,0,0,.10);overflow:hidden}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px 16px 16px}
-    .stat{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--soft2)}
-    .stat .n{font-weight:1200;font-size:18px}
-    .stat .l{font-size:11px;color:var(--mut);font-weight:1000;margin-top:2px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    
+    .preview-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      margin-top:16px;
+    }
+    
+    .preview-item{
+      position:relative;
+      border-radius:var(--radius-sm);
+      overflow:hidden;
+      background:var(--bg);
+      aspect-ratio:1;
+      border:2px solid var(--border);
+    }
+    
+    .preview-item img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    
+    .preview-item button{
+      position:absolute;
+      top:8px;
+      right:8px;
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      border:none;
+      background:rgba(255,255,255,0.95);
+      cursor:pointer;
+      font-weight:700;
+      color:var(--danger);
+      box-shadow:var(--shadow);
+      transition:all 0.2s;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    
+    .preview-item button:hover{
+      transform:scale(1.1);
+      background:#fff;
+    }
 
-    .seg{display:flex;gap:6px;padding:10px;background:var(--soft2);border:1px solid var(--line);border-radius:999px}
-    .seg button{flex:1;border:none;background:transparent;padding:10px 12px;border-radius:999px;cursor:pointer;font-weight:1100;color:#334155}
-    .seg button.active{background:#fff;border:1px solid rgba(226,232,240,.9);box-shadow:0 6px 18px rgba(0,0,0,.08);color:#0369a1}
+    /* Chat - Mobile First */
+    .chat-overlay{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,0.5);
+      backdrop-filter:blur(4px);
+      z-index:180;
+      opacity:0;
+      transition:opacity 0.3s;
+    }
+    
+    .chat-overlay.show{
+      display:block;
+      opacity:1;
+    }
+    
+    .chat{
+      display:none;
+      position:fixed;
+      top:0;
+      right:0;
+      height:100vh;
+      width:100%;
+      max-width:480px;
+      background:var(--surface);
+      z-index:200;
+      box-shadow:-10px 0 40px rgba(0,0,0,0.2);
+      transform:translateX(100%);
+      transition:transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .chat.show{
+      display:flex;
+      transform:translateX(0);
+    }
+    
+    .chat-shell{
+      display:flex;
+      height:100%;
+      width:100%;
+      flex-direction:column;
+    }
+    
+    @media(min-width:769px){
+      .chat-shell{flex-direction:row}
+    }
+    
+    .chat-list{
+      width:100%;
+      background:var(--bg);
+      border-bottom:1px solid var(--border);
+      display:flex;
+      flex-direction:column;
+      height:40%;
+    }
+    
+    @media(min-width:769px){
+      .chat-list{
+        width:280px;
+        min-width:280px;
+        border-right:1px solid var(--border);
+        border-bottom:none;
+        height:100%;
+      }
+    }
+    
+    .chat-top{
+      padding:20px;
+      border-bottom:1px solid var(--border);
+      background:var(--surface);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+    
+    .chat-top b{
+      font-size:18px;
+      font-weight:800;
+    }
+    
+    .conv{
+      padding:16px;
+      border-bottom:1px solid var(--border);
+      cursor:pointer;
+      display:flex;
+      gap:12px;
+      transition:all 0.2s;
+    }
+    
+    .conv:hover{background:rgba(14,165,233,0.05)}
+    
+    .conv.active{
+      background:var(--primary-light);
+      border-left:4px solid var(--primary);
+    }
+    
+    .conv .t{
+      font-size:11px;
+      color:var(--text-secondary);
+      font-weight:600;
+    }
+    
+    .conv .n{
+      font-size:14px;
+      font-weight:700;
+      color:var(--text);
+      margin-bottom:2px;
+    }
+    
+    .conv .p{
+      font-size:13px;
+      color:var(--text-secondary);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:200px;
+    }
 
-    .list{margin-top:12px;display:grid;gap:12px}
-    .item{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
-    .thumb{width:120px;height:86px;border-radius:14px;border:1px solid var(--line);object-fit:cover;background:var(--line);flex:0 0 auto}
-    .item-main{flex:1;min-width:220px}
-    .item-title{font-weight:1100}
-    .item-sub{margin-top:4px;color:var(--mut);font-weight:900;font-size:12px}
-    .item-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .chat-main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      background:var(--bg);
+      min-width:0;
+      height:60%;
+    }
+    
+    @media(min-width:769px){
+      .chat-main{height:100%}
+    }
+    
+    .chat-empty{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--text-secondary);
+      font-weight:600;
+      padding:24px;
+      text-align:center;
+    }
+    
+    .chat-header{
+      padding:16px 20px;
+      border-bottom:1px solid var(--border);
+      background:var(--surface);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      box-shadow:var(--shadow-sm);
+    }
+    
+    .msgs{
+      flex:1;
+      overflow-y:auto;
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 100%);
+    }
+    
+    .msg{
+      max-width:80%;
+      padding:14px 18px;
+      border-radius:20px;
+      font-size:15px;
+      line-height:1.5;
+      position:relative;
+      animation:messageSlide 0.3s ease-out;
+    }
+    
+    @keyframes messageSlide{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    
+    .msg.sent{
+      align-self:flex-end;
+      background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+      color:#fff;
+      border-bottom-right-radius:6px;
+      box-shadow:0 4px 12px rgba(14,165,233,0.25);
+    }
+    
+    .msg.recv{
+      align-self:flex-start;
+      background:var(--surface);
+      border-bottom-left-radius:6px;
+      box-shadow:var(--shadow);
+      border:1px solid var(--border);
+    }
+    
+    .msg .time{
+      font-size:11px;
+      opacity:0.8;
+      margin-top:6px;
+      font-weight:500;
+    }
+    
+    .chat-input{
+      padding:20px;
+      border-top:1px solid var(--border);
+      background:var(--surface);
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    
+    .chat-input input{
+      border-radius:999px;
+      padding:14px 20px;
+      background:var(--bg);
+    }
+    
+    .send{
+      width:48px;
+      height:48px;
+      border-radius:50%;
+      border:none;
+      background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(14,165,233,0.35);
+      transition:all 0.2s;
+      flex-shrink:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:20px;
+    }
+    
+    .send:hover{
+      transform:scale(1.05);
+      box-shadow:0 6px 16px rgba(14,165,233,0.45);
+    }
+    
+    .send:active{transform:scale(0.95)}
 
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .preview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
-    .preview-item{position:relative;border-radius:14px;overflow:hidden;background:var(--line);height:92px}
-    .preview-item img{width:100%;height:100%;object-fit:cover;display:block}
-    .preview-item button{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.92);cursor:pointer;font-weight:1100}
+    /* Toast */
+    .toast{
+      position:fixed;
+      bottom:24px;
+      left:50%;
+      transform:translateX(-50%) translateY(100px);
+      background:var(--text);
+      color:#fff;
+      padding:16px 24px;
+      border-radius:var(--radius-sm);
+      box-shadow:var(--shadow-xl);
+      z-index:2200;
+      opacity:0;
+      transition:all 0.3s;
+      font-weight:600;
+      max-width:min(480px, calc(100% - 40px));
+      text-align:center;
+    }
+    
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
 
-    .chat-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:180}
-    .chat-overlay.show{display:block}
-    .chat{display:none;position:fixed;top:70px;right:0;height:calc(100vh - 70px);width:420px;background:#fff;z-index:200;border-left:1px solid var(--line);box-shadow:-10px 0 30px rgba(0,0,0,.12)}
-    .chat.show{display:flex}
-    .chat-shell{display:flex;height:100%;width:100%}
-    .chat-list{width:175px;min-width:175px;background:var(--soft2);border-right:1px solid var(--line);display:flex;flex-direction:column}
-    .chat-top{padding:12px;border-bottom:1px solid var(--line);background:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .conv{padding:10px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;gap:10px}
-    .conv.active{background:#e0f2fe}
-    .conv .t{font-size:10px;color:#94a3b8;font-weight:1000}
-    .conv .n{font-size:12px;font-weight:1100}
-    .conv .p{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px}
+    /* User Menu */
+    #userMenu{
+      position:fixed;
+      top:84px;
+      right:20px;
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-xl);
+      min-width:240px;
+      overflow:hidden;
+      z-index:120;
+      animation:menuSlide 0.2s ease-out;
+    }
+    
+    @keyframes menuSlide{
+      from{opacity:0;transform:translateY(-10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    
+    #userMenu > div:first-child{
+      padding:16px 20px;
+      border-bottom:1px solid var(--border);
+      background:var(--bg);
+    }
+    
+    #userMenu button{
+      width:100%;
+      border:none;
+      background:var(--surface);
+      padding:14px 20px;
+      text-align:left;
+      font-weight:600;
+      cursor:pointer;
+      transition:all 0.2s;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    
+    #userMenu button:hover{
+      background:var(--bg);
+      color:var(--primary);
+      padding-left:24px;
+    }
 
-    .chat-main{flex:1;display:flex;flex-direction:column;background:var(--soft2);min-width:0}
-    .chat-empty{flex:1;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-weight:1000;padding:14px;text-align:center}
-    .chat-header{padding:12px;border-bottom:1px solid var(--line);background:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
-    .msg{max-width:80%;padding:10px 12px;border-radius:16px;font-size:13px;line-height:1.35}
-    .msg.sent{align-self:flex-end;background:var(--b);color:#fff;border-bottom-right-radius:6px}
-    .msg.recv{align-self:flex-start;background:#fff;border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
-    .msg .time{font-size:10px;opacity:.85;margin-top:4px}
-    .chat-input{padding:12px;border-top:1px solid var(--line);background:#fff;display:flex;gap:10px}
-    .chat-input input{border-radius:999px}
-    .send{width:44px;height:44px;border-radius:50%;border:none;background:var(--b);color:#fff;font-weight:1100;cursor:pointer}
+    /* Status badges */
+    .status-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+    }
+    
+    .status-sold{
+      background:#fee2e2;
+      color:#991b1b;
+    }
+    
+    .status-active{
+      background:#d1fae5;
+      color:#065f46;
+    }
 
-    .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 12px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.25);z-index:2200;display:none;max-width:min(560px, calc(100% - 28px));font-weight:1000}
-    .toast.show{display:block}
-
-    @media (max-width: 900px){.profile-layout{grid-template-columns:1fr}}
+    /* Mobile Optimizations */
     @media (max-width: 768px){
-      .container{padding:0 14px}
-      .page{padding:14px 0}
-      .products{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-      .card img{height:150px}
+      .container{padding:0 16px}
+      .page{padding:16px 0}
+      
+      .nav{height:64px}
+      .brand strong{font-size:16px}
+      .logo{width:40px;height:40px;font-size:20px}
+      
+      .products{
+        grid-template-columns:repeat(2,1fr);
+        gap:12px;
+      }
+      
+      .card img{height:160px}
+      .body{padding:12px}
+      .p-title{font-size:14px}
+      .p-price{font-size:16px}
+      
+      .search-card{padding:16px}
+      .search-input{min-width:100%}
+      
       .pm-grid{grid-template-columns:1fr}
-      .pm-img img{height:260px}
-      .preview-grid{grid-template-columns:repeat(3,1fr)}
-      .chat{top:0;right:0;left:0;width:100%;height:100vh;border-left:none;box-shadow:none}
-      .chat-shell{flex-direction:column}
-      .chat-list{width:100%;min-width:0}
-      .chat-main{display:none}
-      .chat-main.active{display:flex}
-      .thumb{width:100%;height:160px}
-      .item-main{min-width:0}
-
-      /* bättre mobil-layout i annons-modal */
-      .head{position:sticky;top:0;z-index:5;background:#fff}
-      .pad{padding:14px}
-      .pm-title{font-size:18px}
-      .pm-price{font-size:20px}
-      .thumbs img{width:64px;height:50px}
-
-      /* profil */
-      .profile-topbar{position:sticky;top:74px;background:rgba(240,249,255,.92);backdrop-filter:blur(6px);padding:10px 0;z-index:20}
+      .pm-img img{height:280px}
+      .thumbs img{width:64px;height:48px}
+      
+      .profile-layout{grid-template-columns:1fr}
+      .profile-top{padding:0 16px 16px}
+      .profile-avatar{width:64px;height:64px;font-size:20px}
+      
+      .thumb{width:100%;height:180px}
+      
+      .chat{max-width:100%}
+      .chat-list{height:35%}
+      .chat-main{height:65%}
+      
+      .modal{padding:12px}
+      .box{max-height:95vh}
+      .head{padding:16px 20px}
+      .pad{padding:20px}
+      
+      .action-buttons{flex-direction:column}
+      .action-buttons .btn{width:100%;justify-content:center}
+      
+      .preview-grid{grid-template-columns:repeat(2,1fr)}
+      
+      .grid2{grid-template-columns:1fr}
     }
-
-      /* profil */
-      .profile-topbar{position:sticky;top:74px;background:rgba(240,249,255,.92);backdrop-filter:blur(6px);padding:10px 0;z-index:20}
+    
+    @media (max-width: 480px){
+      .products{grid-template-columns:1fr}
+      .nav-actions .btn-soft{display:none}
     }
+    
+    /* Touch improvements */
+    @media (hover: none){
+      .btn:hover{transform:none}
+      .card:hover{transform:none}
+      .card:hover img{transform:none}
+    }
+    
+    /* Loading animation */
+    .skeleton{
+      background:linear-gradient(90deg,var(--bg) 25%,#e2e8f0 50%,var(--bg) 75%);
+      background-size:200% 100%;
+      animation:loading 1.5s infinite;
+    }
+    
+    @keyframes loading{
+      0%{background-position:200% 0}
+      100%{background-position:-200% 0}
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar{width:8px;height:8px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--text-secondary)}
   </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -212,7 +1378,7 @@
       <div class="logo">👶</div>
       <div>
         <strong>Miniblocket</strong>
-        <small>Skapat av föräldrar - För föräldrar</small>
+        <small>Bara barnsaker</small>
       </div>
     </div>
 
@@ -257,16 +1423,16 @@
   <div id="products" class="products"></div>
 
   <div id="empty" class="empty">
-    <div style="font-size:56px;opacity:.25">🔍</div>
-    <div style="font-weight:1100;margin-top:8px">Inga annonser hittades</div>
-    <div style="margin-top:6px">Prova att ändra dina filter</div>
+    <div class="empty-icon">🔍</div>
+    <div style="font-weight:800;font-size:18px;margin-bottom:8px">Inga annonser hittades</div>
+    <div style="color:var(--text-secondary)">Prova att ändra dina filter eller sökord</div>
   </div>
 </div>
 
 <div class="container page hidden" id="profilePage">
-  <div class="profile-topbar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+  <div class="profile-topbar" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap">
     <button class="btn btn-soft" onclick="showHome()">← Till alla annonser</button>
-    <div style="font-weight:1100;color:#334155">Min profil</div>
+    <div style="font-weight:800;font-size:18px;color:var(--text)">Min profil</div>
   </div>
   <div class="profile-layout">
     <div class="panel" style="overflow:hidden">
@@ -276,10 +1442,10 @@
           <img id="profileAvatarImg" alt="" class="hidden" style="width:100%;height:100%;object-fit:cover" />
           <span id="profileAvatar">??</span>
         </div>
-        <div>
-          <div style="font-weight:1100" id="profileName">Profil</div>
-          <div style="font-size:12px;color:var(--mut);font-weight:900" id="profileEmail">—</div>
-          <div style="margin-top:8px;color:var(--mut);font-weight:900;font-size:12px;line-height:1.5" id="profileBio">Ingen beskrivning ännu.</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800;font-size:20px" id="profileName">Profil</div>
+          <div style="font-size:13px;color:var(--text-secondary);font-weight:500;margin-top:4px" id="profileEmail">—</div>
+          <div style="margin-top:12px;color:var(--text-secondary);font-weight:500;font-size:14px;line-height:1.6" id="profileBio">Ingen beskrivning ännu.</div>
         </div>
       </div>
       <div class="stats">
@@ -287,10 +1453,9 @@
         <div class="stat"><div class="n" id="statConvos">0</div><div class="l">chattar</div></div>
         <div class="stat"><div class="n" id="statFav">0</div><div class="l">favoriter</div></div>
       </div>
-      <div style="padding:0 16px 16px 16px;display:flex;gap:10px;flex-wrap:wrap">
+      <div style="padding:0 24px 24px;display:flex;gap:12px;flex-wrap:wrap">
         <button class="btn btn-primary" style="flex:1" onclick="openSell()">+ Ny annons</button>
         <button class="btn btn-soft" style="flex:1" onclick="openEditProfile()">✏️ Redigera profil</button>
-        <button class="btn btn-soft" style="flex:1" onclick="showHome()">Start</button>
       </div>
     </div>
 
@@ -314,18 +1479,27 @@
     </div>
 
     <div id="chatMain" class="chat-main">
-      <div id="chatEmpty" class="chat-empty">Välj en konversation för att börja chatta</div>
+      <div id="chatEmpty" class="chat-empty">
+        <div>
+          <div style="font-size:48px;margin-bottom:16px">💬</div>
+          <div style="font-weight:700;font-size:16px">Välj en konversation</div>
+          <div style="font-size:14px;margin-top:8px;opacity:0.8">Klicka på en chatt i listan för att börja skriva</div>
+        </div>
+      </div>
 
       <div id="chatActive" class="hidden" style="height:100%;display:flex;flex-direction:column">
         <div class="chat-header">
-          <div style="display:flex;gap:10px;align-items:center;min-width:0">
+          <div style="display:flex;gap:12px;align-items:center;min-width:0">
             <div class="seller-badge" id="chatAva">??</div>
             <div style="min-width:0">
-              <div style="font-weight:1100;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="chatWith">—</div>
-              <div style="font-size:11px;color:#10b981;font-weight:1000">🟢 Aktiv nu</div>
+              <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px" id="chatWith">—</div>
+              <div style="font-size:12px;color:var(--success);font-weight:600;display:flex;align-items:center;gap:4px">
+                <span style="width:8px;height:8px;background:var(--success);border-radius:50%;display:inline-block"></span>
+                Aktiv nu
+              </div>
             </div>
           </div>
-          <button class="x" onclick="backToConversations()" title="Till listan">⟲</button>
+          <button class="x" onclick="backToConversations()" title="Tillbaka till listan">←</button>
         </div>
 
         <div class="msgs" id="msgs"></div>
@@ -353,27 +1527,35 @@
           <div class="pm-price" id="pmPrice">—</div>
           <div class="pm-meta" id="pmMeta">—</div>
 
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
             <span class="chip good">✅ Säker affär</span>
+            <span id="pmStatus" class="status-badge status-active" style="display:none">AKTIV</span>
           </div>
 
           <div class="seller-card">
             <div class="seller-badge" id="pmSellerAva">??</div>
             <div class="seller-info-wrap">
-              <div style="font-weight:1100" id="pmSeller">—</div>
-              <div style="font-size:12px;color:var(--mut);font-weight:1000" id="pmSellerLine">Säljare</div>
+              <div style="font-weight:700;font-size:16px" id="pmSeller">—</div>
+              <div style="font-size:13px;color:var(--text-secondary);font-weight:500" id="pmSellerLine">Säljare</div>
             </div>
-            <button class="btn btn-primary" onclick="messageSeller()">💬 Skriv till säljare</button>
+            <button class="btn btn-primary" id="pmMessageBtn" onclick="messageSeller()">💬 Kontakta</button>
           </div>
 
-          <div style="margin-top:14px;color:#334155">
-            <div style="font-weight:1100;margin-bottom:6px">Beskrivning</div>
-            <div id="pmDesc">—</div>
+          <div style="margin-top:20px;color:var(--text)">
+            <div style="font-weight:700;margin-bottom:10px;font-size:16px">Beskrivning</div>
+            <div id="pmDesc" style="line-height:1.7;color:var(--text-secondary)">—</div>
           </div>
 
-          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <div class="action-buttons" id="pmActions">
             <button class="btn btn-soft" id="pmFavBtn" onclick="toggleFavoriteFromModal()">🤍 Favorit</button>
             <button class="btn btn-soft" onclick="openSellerProfileFromModal()">👤 Se profil</button>
+          </div>
+          
+          <div id="pmOwnerActions" class="action-buttons hidden" style="border-top:2px solid var(--border);padding-top:20px;margin-top:20px">
+            <div style="width:100%;font-weight:700;margin-bottom:8px;color:var(--text-secondary);font-size:14px">⚙️ Hantera din annons:</div>
+            <button class="btn btn-soft" onclick="editCurrentProduct()">✏️ Redigera</button>
+            <button class="btn btn-success" id="pmSoldBtn" onclick="markAsSold()">✓ Markera som såld</button>
+            <button class="btn btn-danger" onclick="deleteCurrentProduct()">🗑️ Ta bort</button>
           </div>
         </div>
       </div>
@@ -383,24 +1565,24 @@
 
 <div id="editProfileModal" class="modal" onclick="closeOnBackdrop(event)">
   <div class="box" onclick="event.stopPropagation()" style="max-width:620px">
-    <div class="head"><div><h3>Redigera profil</h3><div style="font-size:12px;color:var(--mut);font-weight:1000">Sparas lokalt (demo).</div></div><button class="x" onclick="hide('editProfileModal')">✕</button></div>
+    <div class="head"><div><h3>Redigera profil</h3><div style="font-size:13px;color:var(--text-secondary);font-weight:500;margin-top:4px">Sparas lokalt i din webbläsare</div></div><button class="x" onclick="hide('editProfileModal')">✕</button></div>
     <div class="pad">
-      <div style="display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:start">
+      <div style="display:grid;grid-template-columns:160px 1fr;gap:24px;align-items:start">
         <div>
-          <div style="font-weight:1100;margin-bottom:8px">Profilbild</div>
-          <div style="width:140px;height:140px;border-radius:18px;border:1px solid var(--line);background:var(--soft2);overflow:hidden;display:flex;align-items:center;justify-content:center">
+          <div style="font-weight:700;margin-bottom:12px;color:var(--text)">Profilbild</div>
+          <div style="width:160px;height:160px;border-radius:20px;border:3px solid var(--border);background:var(--bg);overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow) inset">
             <img id="epPreview" class="hidden" alt="" style="width:100%;height:100%;object-fit:cover" />
-            <div id="epInitials" style="font-weight:1200;font-size:28px;color:#334155"></div>
+            <div id="epInitials" style="font-weight:800;font-size:32px;color:var(--text-secondary)"></div>
           </div>
-          <input id="epImg" type="file" accept="image/*" style="margin-top:10px" />
-          <button class="btn btn-soft" style="margin-top:10px;width:100%" onclick="removeProfileImage()">Ta bort bild</button>
+          <input id="epImg" type="file" accept="image/*" style="margin-top:16px;font-size:13px" />
+          <button class="btn btn-soft" style="margin-top:12px;width:100%" onclick="removeProfileImage()">Ta bort bild</button>
         </div>
         <div>
-          <div style="font-weight:1100;margin-bottom:6px">Om mig</div>
-          <textarea id="epBio" rows="6" placeholder="Skriv något kort om dig själv…"></textarea>
-          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+          <div style="font-weight:700;margin-bottom:10px;color:var(--text)">Om mig</div>
+          <textarea id="epBio" rows="8" placeholder="Berätta kort om dig själv..." style="resize:vertical;min-height:120px"></textarea>
+          <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
             <button class="btn btn-soft" style="flex:1" onclick="hide('editProfileModal')">Avbryt</button>
-            <button class="btn btn-primary" style="flex:1" onclick="saveProfileEdits()">Spara</button>
+            <button class="btn btn-primary" style="flex:1" onclick="saveProfileEdits()">Spara ändringar</button>
           </div>
         </div>
       </div>
@@ -409,18 +1591,22 @@
 </div>
 
 <div id="authModal" class="modal" onclick="closeOnBackdrop(event)">
-  <div class="box" onclick="event.stopPropagation()" style="max-width:520px">
-    <div class="head"><div><h3 id="authTitle">Skapa konto</h3><div style="font-size:12px;color:var(--mut);font-weight:1000" id="authSub">Demo i din webbläsare.</div></div><button class="x" onclick="hide('authModal')">✕</button></div>
+  <div class="box" onclick="event.stopPropagation()" style="max-width:480px">
+    <div class="head"><div><h3 id="authTitle">Skapa konto</h3><div style="font-size:13px;color:var(--text-secondary);font-weight:500;margin-top:4px" id="authSub">Börja köpa och sälja barnsaker</div></div><button class="x" onclick="hide('authModal')">✕</button></div>
     <div class="pad">
-      <div id="nameRow" style="margin-bottom:12px">
-        <div style="font-weight:1000;margin-bottom:6px">Namn</div>
-        <input id="aName" placeholder="t.ex. Khanwali" />
+      <div id="nameRow" style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">Namn</div>
+        <input id="aName" placeholder="t.ex. Anna Andersson" />
       </div>
-      <div style="font-weight:1000;margin-bottom:6px">E-post</div>
-      <input id="aEmail" placeholder="namn@mail.se" />
-      <div style="font-weight:1000;margin-bottom:6px;margin-top:10px">Lösenord</div>
-      <input id="aPass" type="password" placeholder="Minst 6 tecken" />
-      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">E-post</div>
+        <input id="aEmail" type="email" placeholder="namn@mail.se" />
+      </div>
+      <div style="margin-bottom:20px">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">Lösenord</div>
+        <input id="aPass" type="password" placeholder="Minst 6 tecken" />
+      </div>
+      <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
         <button class="btn btn-soft" style="flex:1" onclick="toggleAuthMode()" id="authSwitch">Jag har redan konto</button>
         <button class="btn btn-primary" style="flex:1" onclick="submitAuth()" id="authDo">Skapa konto</button>
       </div>
@@ -430,25 +1616,74 @@
 
 <div id="sellModal" class="modal" onclick="closeOnBackdrop(event)">
   <div class="box" onclick="event.stopPropagation()" style="max-width:680px">
-    <div class="head"><div><h3>Ny annons</h3><div style="font-size:12px;color:var(--mut);font-weight:1000" id="sellAs">Säljer som: —</div></div><button class="x" onclick="hide('sellModal')">✕</button></div>
+    <div class="head"><div><h3 id="sellModalTitle">Ny annons</h3><div style="font-size:13px;color:var(--text-secondary);font-weight:500;margin-top:4px" id="sellAs">Säljer som: —</div></div><button class="x" onclick="hide('sellModal')">✕</button></div>
     <div class="pad">
-      <div style="font-weight:1000;margin-bottom:6px">Titel</div>
-      <input id="sTitle" placeholder="t.ex. Bugaboo Cameleon 3" />
-      <div class="grid2" style="margin-top:10px">
-        <div><div style="font-weight:1000;margin-bottom:6px">Pris (kr)</div><input id="sPrice" type="number" placeholder="0" /></div>
-        <div><div style="font-weight:1000;margin-bottom:6px">Kategori</div>
-          <select id="sCat"><option value="leksaker">Leksaker</option><option value="barnvagn">Barnvagn</option><option value="bilbarnstol">Bilbarnstol</option><option value="kläder">Kläder</option><option value="möbler">Möbler</option></select>
+      <input type="hidden" id="sId" value="" />
+      <div style="font-weight:600;margin-bottom:8px;color:var(--text)">Titel</div>
+      <input id="sTitle" placeholder="t.ex. Bugaboo Cameleon 3 i fint skick" />
+      <div class="grid2" style="margin-top:16px">
+        <div>
+          <div style="font-weight:600;margin-bottom:8px;color:var(--text)">Pris (kr)</div>
+          <input id="sPrice" type="number" placeholder="0" min="0" />
+        </div>
+        <div>
+          <div style="font-weight:600;margin-bottom:8px;color:var(--text)">Kategori</div>
+          <select id="sCat">
+            <option value="leksaker">Leksaker</option>
+            <option value="barnvagn">Barnvagn</option>
+            <option value="bilbarnstol">Bilbarnstol</option>
+            <option value="kläder">Kläder</option>
+            <option value="möbler">Möbler</option>
+          </select>
         </div>
       </div>
-      <div style="margin-top:10px"><div style="font-weight:1000;margin-bottom:6px">Plats</div>
-        <select id="sLoc"><option>Stockholm</option><option>Göteborg</option><option>Malmö</option><option>Uppsala</option></select>
+      <div style="margin-top:16px">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">Plats</div>
+        <select id="sLoc">
+          <option>Stockholm</option>
+          <option>Göteborg</option>
+          <option>Malmö</option>
+          <option>Uppsala</option>
+        </select>
       </div>
-      <div style="margin-top:10px"><div style="font-weight:1000;margin-bottom:6px">Beskrivning</div><textarea id="sDesc" placeholder="Beskriv varan..." rows="4"></textarea></div>
-      <div style="margin-top:10px"><div style="font-weight:1000;margin-bottom:6px">Bilder</div><input id="sImgs" type="file" accept="image/*" multiple />
-        <div style="font-size:12px;color:var(--mut);font-weight:900;margin-top:6px">Välj 1–6 bilder (demo).</div>
+      <div style="margin-top:16px">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">Beskrivning</div>
+        <textarea id="sDesc" placeholder="Beskriv varan, skick, ålder, eventuella skavanker..." rows="5" style="resize:vertical"></textarea>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">Bilder</div>
+        <input id="sImgs" type="file" accept="image/*" multiple />
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:8px">Välj upp till 6 bilder (demo-läge: sparas lokalt)</div>
         <div class="preview-grid" id="sPreview"></div>
       </div>
-      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap"><button class="btn btn-soft" style="flex:1" onclick="hide('sellModal')">Avbryt</button><button class="btn btn-primary" style="flex:1" onclick="publish()">Publicera</button></div>
+      <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap">
+        <button class="btn btn-soft" style="flex:1" onclick="hide('sellModal')">Avbryt</button>
+        <button class="btn btn-primary" style="flex:1" onclick="publish()" id="publishBtn">Publicera annons</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="deleteModal" class="modal" onclick="closeOnBackdrop(event)">
+  <div class="box" onclick="event.stopPropagation()" style="max-width:420px">
+    <div class="head" style="background:linear-gradient(135deg,#fee2e2 0%,#fff 100%)"><h3 style="color:#991b1b">🗑️ Ta bort annons</h3><button class="x" onclick="hide('deleteModal')">✕</button></div>
+    <div class="pad">
+      <p style="margin-bottom:16px;color:var(--text-secondary);line-height:1.6">Är du säker på att du vill ta bort denna annons? Åtgärden kan inte ångras.</p>
+      
+      <div style="margin-bottom:20px">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">Varför tas annonsen bort?</div>
+        <select id="deleteReason" style="width:100%">
+          <option value="sold">Varan är såld</option>
+          <option value="changed">Ångrar försäljning</option>
+          <option value="error">Felaktig information</option>
+          <option value="other">Annan anledning</option>
+        </select>
+      </div>
+      
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-soft" style="flex:1" onclick="hide('deleteModal')">Avbryt</button>
+        <button class="btn btn-danger" style="flex:1" onclick="confirmDelete()">Ta bort permanent</button>
+      </div>
     </div>
   </div>
 </div>
@@ -457,38 +1692,38 @@
   <div class="box" onclick="event.stopPropagation()" style="max-width:760px">
     <div class="head"><h3 id="sellerTitle">Profil</h3><button class="x" onclick="hide('sellerModal')">✕</button></div>
     <div class="pad">
-      <div class="panel panel-pad" style="margin-bottom:12px">
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <div class="seller-badge" style="width:46px;height:46px;font-size:14px" id="sellerAva">??</div>
-          <div style="min-width:0">
-            <div style="font-weight:1100" id="sellerName">—</div>
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+      <div class="panel panel-pad" style="margin-bottom:20px;background:linear-gradient(135deg,var(--bg) 0%,var(--surface) 100%)">
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+          <div class="seller-badge" style="width:56px;height:56px;font-size:16px" id="sellerAva">??</div>
+          <div style="min-width:0;flex:1">
+            <div style="font-weight:800;font-size:20px" id="sellerName">—</div>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px">
               <div id="sellerStars" class="stars" aria-label="Betyg">—</div>
-              <div style="font-size:12px;color:var(--mut);font-weight:1000" id="sellerCounts">—</div>
+              <div style="font-size:13px;color:var(--text-secondary);font-weight:500" id="sellerCounts">—</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="panel panel-pad" style="margin-bottom:12px">
-        <div style="font-weight:1100;margin-bottom:8px">Omdömen</div>
+      <div class="panel panel-pad" style="margin-bottom:20px">
+        <div style="font-weight:700;margin-bottom:16px;font-size:16px">Omdömen</div>
         <div id="sellerReviews" class="list"></div>
-        <div id="sellerReviewForm" class="review-form" style="margin-top:10px"></div>
+        <div id="sellerReviewForm" class="review-form" style="margin-top:16px;padding:16px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)"></div>
       </div>
 
-      <div style="font-weight:1100;margin-bottom:8px">Annonser från säljaren</div>
+      <div style="font-weight:700;margin-bottom:16px;font-size:16px">Annonser från säljaren</div>
       <div class="list" id="sellerAds"></div>
     </div>
   </div>
 </div>
 
-<div id="userMenu" class="hidden" style="position:fixed;top:78px;right:20px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 24px rgba(0,0,0,.12);min-width:220px;overflow:hidden;z-index:120">
-  <div style="padding:12px 14px;border-bottom:1px solid #f1f5f9">
-    <div style="font-weight:1100" id="uName">—</div>
-    <div style="font-size:12px;color:var(--mut);font-weight:900" id="uEmail">—</div>
+<div id="userMenu" class="hidden">
+  <div>
+    <div style="font-weight:700;color:var(--text)" id="uName">—</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-top:2px" id="uEmail">—</div>
   </div>
-  <button onclick="showProfile()" style="width:100%;border:none;background:#fff;padding:12px 14px;text-align:left;font-weight:1100;cursor:pointer">Min profil</button>
-  <button onclick="logout()" style="width:100%;border:none;background:#fff;padding:12px 14px;text-align:left;font-weight:1100;cursor:pointer">Logga ut</button>
+  <button onclick="showProfile()">👤 Min profil</button>
+  <button onclick="logout()">🚪 Logga ut</button>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -496,7 +1731,7 @@
 <script>
   const LS_USERS='mb_users_v2';
   const LS_SESSION='mb_session_v2';
-  const LS_PRODUCTS='mb_products_v3';
+  const LS_PRODUCTS='mb_products_v4';
   const LS_FAV_PREFIX='mb_fav_';
   const LS_CONV_PREFIX='mb_conv_';
   const LS_PROFILE_PREFIX='mb_profile_';
@@ -509,9 +1744,13 @@
 
   let authMode='signup';
   let session=loadJSON(LS_SESSION,null);
-
   let products=loadJSON(LS_PRODUCTS,null);
-  if(!Array.isArray(products)||products.length===0){products=seedProducts();saveJSON(LS_PRODUCTS,products)}
+  let deleteTargetId=null;
+
+  if(!Array.isArray(products)||products.length===0){
+    products=seedProducts();
+    saveJSON(LS_PRODUCTS,products);
+  }
 
   let activeCat='all';
   let currentProduct=null;
@@ -519,6 +1758,7 @@
   let sellImgs=[];
   let conversations=[];
   let currentChat=null;
+  let isEditing=false;
 
   init();
 
@@ -528,15 +1768,42 @@
     applyFilters();
     updateBadge();
     wireSellUpload();
+    
+    // Touch gestures for mobile chat
+    let touchStartX=0;
+    const chatEl=document.getElementById('chat');
+    chatEl.addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0].screenX;});
+    chatEl.addEventListener('touchend',e=>{
+      const touchEndX=e.changedTouches[0].screenX;
+      if(touchStartX-touchEndX>100 && window.innerWidth<=768){
+        // Swipe left to close on mobile
+        closeChatPanel();
+      }
+    });
 
     window.addEventListener('resize',ensureChatLayout);
     document.addEventListener('click',()=>closeUserMenu());
-    document.addEventListener('keydown',(e)=>{if(e.key==='Escape'){closeAllModals();if(isChatOpen())closeChatPanel();closeUserMenu();}});
+    document.addEventListener('keydown',(e)=>{
+      if(e.key==='Escape'){
+        closeAllModals();
+        if(isChatOpen())closeChatPanel();
+        closeUserMenu();
+      }
+    });
   }
 
   /* AUTH */
-  function openAuth(mode){authMode=mode||'signup';syncAuthUI();show('authModal')}
-  function toggleAuthMode(){authMode=(authMode==='signup')?'login':'signup';syncAuthUI()}
+  function openAuth(mode){
+    authMode=mode||'signup';
+    syncAuthUI();
+    show('authModal');
+  }
+  
+  function toggleAuthMode(){
+    authMode=(authMode==='signup')?'login':'signup';
+    syncAuthUI();
+  }
+  
   function syncAuthUI(){
     const title=document.getElementById('authTitle');
     const sub=document.getElementById('authSub');
@@ -546,13 +1813,13 @@
 
     if(authMode==='signup'){
       title.textContent='Skapa konto';
-      sub.textContent='Demo i din webbläsare.';
+      sub.textContent='Börja köpa och sälja barnsaker';
       sw.textContent='Jag har redan konto';
       doBtn.textContent='Skapa konto';
       nameRow.style.display='block';
     }else{
       title.textContent='Logga in';
-      sub.textContent='Logga in med e-post och lösenord.';
+      sub.textContent='Välkommen tillbaka!';
       sw.textContent='Skapa nytt konto';
       doBtn.textContent='Logga in';
       nameRow.style.display='none';
@@ -571,21 +1838,42 @@
 
     if(authMode==='signup'){
       if(!name) return toast('Fyll i ditt namn.');
-      if(users.some(u=>u.email===email)){authMode='login';syncAuthUI();return toast('E-posten finns redan. Logga in istället.');}
+      if(users.some(u=>u.email===email)){
+        authMode='login';
+        syncAuthUI();
+        return toast('E-posten finns redan. Växlat till inloggning.');
+      }
       const u={id:uid(),name,email,pass};
-      users.push(u);saveJSON(LS_USERS,users);
-      session={userId:u.id};saveJSON(LS_SESSION,session);
+      users.push(u);
+      saveJSON(LS_USERS,users);
+      session={userId:u.id};
+      saveJSON(LS_SESSION,session);
       saveJSON(profileKey(u.id),{bio:'',image:''});
-      applyAuthUI();hide('authModal');loadUserData();toast('Konto skapat!');
+      applyAuthUI();
+      hide('authModal');
+      loadUserData();
+      toast('Välkommen! Ditt konto är skapat.');
     }else{
       const u=users.find(x=>x.email===email);
       if(!u||u.pass!==pass) return toast('Fel e-post eller lösenord.');
-      session={userId:u.id};saveJSON(LS_SESSION,session);
-      applyAuthUI();hide('authModal');loadUserData();toast('Inloggning lyckades!');
+      session={userId:u.id};
+      saveJSON(LS_SESSION,session);
+      applyAuthUI();
+      hide('authModal');
+      loadUserData();
+      toast('Inloggning lyckades!');
     }
   }
 
-  function logout(){session=null;localStorage.removeItem(LS_SESSION);applyAuthUI();closeUserMenu();showHome();closeChatPanel();toast('Utloggad.')}
+  function logout(){
+    session=null;
+    localStorage.removeItem(LS_SESSION);
+    applyAuthUI();
+    closeUserMenu();
+    showHome();
+    closeChatPanel();
+    toast('Du är utloggad.');
+  }
 
   function getUser(){
     if(!session) return null;
@@ -617,8 +1905,14 @@
     syncAuthUI();
   }
 
-  function toggleUserMenu(e){e.stopPropagation();document.getElementById('userMenu').classList.toggle('hidden')}
-  function closeUserMenu(){document.getElementById('userMenu').classList.add('hidden')}
+  function toggleUserMenu(e){
+    e.stopPropagation();
+    document.getElementById('userMenu').classList.toggle('hidden');
+  }
+  
+  function closeUserMenu(){
+    document.getElementById('userMenu').classList.add('hidden');
+  }
 
   /* NAV */
   function showHome(){
@@ -660,60 +1954,80 @@
 
     if(tab==='ads'){
       const mine=products.filter(p=>p.userId===u.id);
-      box.innerHTML=mine.length?mine.map(p=>profileItem(p,'ad')).join(''):`<div class="panel panel-pad"><div style="font-size:12px;color:var(--mut);font-weight:900">Du har inga annonser än.</div><div style="margin-top:12px"><button class="btn btn-primary" onclick="openSell()">+ Skapa annons</button></div></div>`;
+      if(!mine.length){
+        box.innerHTML=`<div class="panel panel-pad" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">📦</div><div style="font-weight:700;margin-bottom:8px">Du har inga annonser än</div><div style="color:var(--text-secondary);margin-bottom:20px">Börja sälja genom att skapa din första annons</div><button class="btn btn-primary" onclick="openSell()">+ Skapa annons</button></div>`;
+        return;
+      }
+      box.innerHTML=mine.map(p=>profileItem(p,'ad')).join('');
       return;
     }
 
     if(tab==='convos'){
-      box.innerHTML=conversations.length?conversations.map(c=>`
-        <div class="panel panel-pad">
-          <div class="item">
-            <div class="seller-badge" style="width:46px;height:46px;font-size:14px">${escapeHtml(c.avatar)}</div>
+      if(!conversations.length){
+        box.innerHTML=`<div class="panel panel-pad" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">💬</div><div style="font-weight:700">Inga konversationer än</div><div style="color:var(--text-secondary);margin-top:8px">Dina meddelanden visas här</div></div>`;
+        return;
+      }
+      box.innerHTML=conversations.map(c=>`
+        <div class="panel" style="cursor:pointer" onclick="openChatPanel();openChat(${c.id});">
+          <div class="item" style="border:none;background:transparent">
+            <div class="seller-badge" style="width:48px;height:48px;font-size:16px">${escapeHtml(c.avatar)}</div>
             <div class="item-main">
-              <div class="item-title">${escapeHtml(c.with)}</div>
-              <div class="item-sub">${escapeHtml(c.product)} • Senast ${escapeHtml(c.time)}</div>
-              <div class="item-sub" style="margin-top:8px">Senaste: ${escapeHtml(c.lastMessage)}</div>
-              <div class="item-actions"><button class="btn btn-primary" onclick="openChatPanel();openChat(${c.id});">Öppna chat</button></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+                <div class="item-title">${escapeHtml(c.with)}</div>
+                <div style="font-size:12px;color:var(--text-secondary);font-weight:600">${escapeHtml(c.time)}</div>
+              </div>
+              <div class="item-sub">${escapeHtml(c.product)}</div>
+              <div style="margin-top:8px;color:var(--text);font-size:14px;font-weight:500">${escapeHtml(c.lastMessage)}</div>
             </div>
           </div>
         </div>
-      `).join(''):`<div class="panel panel-pad"><div style="font-size:12px;color:var(--mut);font-weight:900">Du har inga konversationer än.</div></div>`;
+      `).join('');
       return;
     }
 
     if(tab==='fav'){
       const favIds=loadFavorites();
       const favs=products.filter(p=>favIds.includes(p.id));
-      box.innerHTML=favs.length?favs.map(p=>profileItem(p,'fav')).join(''):`<div class="panel panel-pad"><div style="font-size:12px;color:var(--mut);font-weight:900">Du har inga favoriter än.</div></div>`;
+      if(!favs.length){
+        box.innerHTML=`<div class="panel panel-pad" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">🤍</div><div style="font-weight:700">Inga favoriter än</div><div style="color:var(--text-secondary);margin-top:8px">Spara annonser du gillar genom att klicka på hjärtat</div></div>`;
+        return;
+      }
+      box.innerHTML=favs.map(p=>profileItem(p,'fav')).join('');
       return;
     }
   }
 
   function profileItem(p,mode){
     const isFav=isFavorited(p.id);
-    const favChip=`<div class="chip ${isFav?'good':''}">${isFav?'❤️ Favorit':'🤍 Ej favorit'}</div>`;
-
-    let actions='';
-    if(mode==='fav'){
-      actions=`<button class="btn btn-soft" onclick="openProduct(${p.id})">Visa</button><button class="btn btn-danger" onclick="unfavorite(${p.id});setProfileTab('fav');">Ta bort favorit</button>`;
+    const isSold=p.status==='sold';
+    const statusBadge=isSold?`<span class="status-badge status-sold">SÅLD</span>`:`<span class="status-badge status-active">AKTIV</span>`;
+    
+    let actions=`<button class="btn btn-soft" onclick="event.stopPropagation();openProduct(${p.id})">Visa</button>`;
+    
+    if(mode==='ad'){
+      if(!isSold){
+        actions+=`<button class="btn btn-soft" onclick="event.stopPropagation();openEdit(${p.id})">✏️ Redigera</button>`;
+        actions+=`<button class="btn btn-success" onclick="event.stopPropagation();quickMarkSold(${p.id})">✓ Såld</button>`;
+      }
+      actions+=`<button class="btn btn-danger" onclick="event.stopPropagation();promptDelete(${p.id})">🗑️ Ta bort</button>`;
     }else{
-      actions=`<button class="btn btn-soft" onclick="openProduct(${p.id})">Visa</button><button class="btn btn-soft" onclick="toggleFavorite(${p.id},null);">${isFav?'Ta bort favorit':'Favoritmarkera'}</button>`;
+      actions+=`<button class="btn btn-danger" onclick="event.stopPropagation();unfavorite(${p.id});setProfileTab('fav');">Ta bort favorit</button>`;
     }
 
     return `
-      <div class="panel panel-pad">
-        <div class="item">
-          <img class="thumb" src="${p.images[0]}" alt="" />
+      <div class="panel ${isSold?'sold':''}" style="${isSold?'opacity:0.7;':''}">
+        <div class="item" onclick="${isSold?'':'openProduct('+p.id+')'}" style="cursor:${isSold?'default':'pointer'};border:none;background:transparent">
+          <img class="thumb" src="${p.images[0]}" alt="" style="${isSold?'filter:grayscale(1)':''}" />
           <div class="item-main">
-            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
-              <div>
-                <div class="item-title">${escapeHtml(p.title)}</div>
-                <div class="item-sub">${p.price} kr • ${escapeHtml(p.location)} • ${escapeHtml(p.date)}</div>
-              </div>
-              ${favChip}
+            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+              <div class="item-title" style="${isSold?'text-decoration:line-through;opacity:0.6':''}">${escapeHtml(p.title)}</div>
+              ${statusBadge}
             </div>
-            <div class="item-sub" style="margin-top:10px">${escapeHtml((p.description||'').slice(0,140))}${(p.description||'').length>140?'…':''}</div>
-            <div class="item-actions">${actions}</div>
+            <div class="item-sub" style="font-size:14px;margin-bottom:4px">
+              <strong style="color:var(--primary-dark);font-size:16px">${p.price} kr</strong> • ${escapeHtml(p.location)} • ${escapeHtml(p.date)}
+            </div>
+            <div class="item-sub" style="margin-top:8px">${escapeHtml((p.description||'').slice(0,120))}${(p.description||'').length>120?'…':''}</div>
+            <div class="item-actions" onclick="event.stopPropagation()">${actions}</div>
           </div>
         </div>
       </div>
@@ -729,8 +2043,14 @@
 
     const epPreview=document.getElementById('epPreview');
     const epInitials=document.getElementById('epInitials');
-    if(data.image){epPreview.src=data.image;epPreview.classList.remove('hidden');epInitials.textContent='';}
-    else{epPreview.classList.add('hidden');epInitials.textContent=initials(u.name);}
+    if(data.image){
+      epPreview.src=data.image;
+      epPreview.classList.remove('hidden');
+      epInitials.textContent='';
+    }else{
+      epPreview.classList.add('hidden');
+      epInitials.textContent=initials(u.name);
+    }
 
     document.getElementById('epImg').value='';
     show('editProfileModal');
@@ -744,8 +2064,15 @@
 
     const img=document.getElementById('profileAvatarImg');
     const ini=document.getElementById('profileAvatar');
-    if(data.image){img.src=data.image;img.classList.remove('hidden');ini.classList.add('hidden');}
-    else{img.classList.add('hidden');ini.classList.remove('hidden');ini.textContent=initials(u.name);}
+    if(data.image){
+      img.src=data.image;
+      img.classList.remove('hidden');
+      ini.classList.add('hidden');
+    }else{
+      img.classList.add('hidden');
+      ini.classList.remove('hidden');
+      ini.textContent=initials(u.name);
+    }
   }
 
   function saveProfileEdits(){
@@ -753,10 +2080,15 @@
     if(!u) return;
     const bio=document.getElementById('epBio').value||'';
     const existing=loadJSON(profileKey(u.id),{bio:'',image:''});
-    const next={bio,image:existing.image||''};
-
+    
     const file=(document.getElementById('epImg').files||[])[0];
-    if(!file){saveJSON(profileKey(u.id),{...existing,bio});applyProfileExtras();hide('editProfileModal');toast('Profil uppdaterad!');return;}
+    if(!file){
+      saveJSON(profileKey(u.id),{...existing,bio});
+      applyProfileExtras();
+      hide('editProfileModal');
+      toast('Profil uppdaterad!');
+      return;
+    }
 
     fileToDataUrl(file).then(url=>{
       saveJSON(profileKey(u.id),{bio,image:url});
@@ -792,7 +2124,7 @@
     const loc=document.getElementById('loc').value;
     const price=document.getElementById('price').value;
 
-    let list=products.slice();
+    let list=products.filter(p=>p.status!=='deleted');
     if(activeCat!=='all') list=list.filter(p=>p.category===activeCat);
     if(q) list=list.filter(p=>p.title.toLowerCase().includes(q)||p.category.toLowerCase().includes(q));
     if(loc) list=list.filter(p=>p.location===loc);
@@ -820,16 +2152,27 @@
 
     grid.innerHTML=list.map(p=>{
       const f=isFavorited(p.id);
+      const isSold=p.status==='sold';
       return `
-        <div class="card" onclick="openProduct(${p.id})">
+        <div class="card ${isSold?'sold':''}" ${isSold?'':'onclick="openProduct('+p.id+')"'}>
           <div class="img-wrap">
-            <img src="${p.images[0]}" alt="${escapeHtml(p.title)}" loading="lazy" />
+            <img src="${p.images[0]}" alt="${escapeHtml(p.title)}" loading="lazy" style="${isSold?'filter:grayscale(1)':''}" />
+            ${isSold?'<div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:24px;letter-spacing:2px">SÅLD</div>':''}
             <div class="tag">📍 ${escapeHtml(p.location)}</div>
             <button class="fav ${f?'active':''}" aria-label="Favorit" onclick="event.stopPropagation();toggleFavorite(${p.id},this)">${f?'❤️':'🤍'}</button>
           </div>
           <div class="body">
-            <div class="p-top"><div class="p-title">${escapeHtml(p.title)}</div><div class="p-price">${p.price} kr</div></div>
-            <div class="p-meta"><div class="seller"><div class="seller-badge">${escapeHtml(p.sellerAvatar)}</div><span>${escapeHtml(p.seller)}</span></div><span>${escapeHtml(p.date)}</span></div>
+            <div class="p-top">
+              <div class="p-title" style="${isSold?'text-decoration:line-through;opacity:0.6':''}">${escapeHtml(p.title)}</div>
+              <div class="p-price" style="${isSold?'opacity:0.6':''}">${p.price} kr</div>
+            </div>
+            <div class="p-meta">
+              <div class="seller">
+                <div class="seller-badge">${escapeHtml(p.sellerAvatar)}</div>
+                <span>${escapeHtml(p.seller)}</span>
+              </div>
+              <span>${escapeHtml(p.date)}</span>
+            </div>
           </div>
         </div>
       `;
@@ -843,11 +2186,36 @@
     pmIdx=0;
     document.getElementById('pmTitle').textContent=currentProduct.title;
     document.getElementById('pmPrice').textContent=currentProduct.price+' kr';
-    document.getElementById('pmMeta').textContent='📍 '+currentProduct.location+' • '+currentProduct.date;
+    document.getElementById('pmMeta').innerHTML=`<span>📍 ${currentProduct.location}</span><span>•</span><span>${currentProduct.date}</span><span>•</span><span>${currentProduct.category}</span>`;
     document.getElementById('pmSeller').textContent=currentProduct.seller;
     document.getElementById('pmSellerAva').textContent=currentProduct.sellerAvatar;
     document.getElementById('pmSellerLine').textContent='Annons: '+currentProduct.short;
-    document.getElementById('pmDesc').textContent=currentProduct.description;
+    document.getElementById('pmDesc').textContent=currentProduct.description||'Ingen beskrivning.';
+
+    // Status handling
+    const isSold=currentProduct.status==='sold';
+    const statusBadge=document.getElementById('pmStatus');
+    statusBadge.style.display='inline-flex';
+    statusBadge.className='status-badge '+(isSold?'status-sold':'status-active');
+    statusBadge.textContent=isSold?'SÅLD':'AKTIV';
+
+    // Owner actions
+    const u=getUser();
+    const isOwner=u&&u.id===currentProduct.userId;
+    document.getElementById('pmOwnerActions').classList.toggle('hidden',!isOwner);
+    document.getElementById('pmMessageBtn').style.display=isOwner?'none':'inline-flex';
+    
+    // Update sold button state
+    const soldBtn=document.getElementById('pmSoldBtn');
+    if(isSold){
+      soldBtn.textContent='↩ Ångra såld';
+      soldBtn.classList.remove('btn-success');
+      soldBtn.classList.add('btn-soft');
+    }else{
+      soldBtn.textContent='✓ Markera som såld';
+      soldBtn.classList.add('btn-success');
+      soldBtn.classList.remove('btn-soft');
+    }
 
     syncModalFavoriteButton();
     renderProductImages();
@@ -857,7 +2225,7 @@
   function syncModalFavoriteButton(){
     const btn=document.getElementById('pmFavBtn');
     const fav=currentProduct?isFavorited(currentProduct.id):false;
-    btn.textContent=fav?'❤️ Favoritmarkerad':'🤍 Favorit';
+    btn.innerHTML=fav?'❤️ Favoritmarkerad':'🤍 Lägg till favorit';
     btn.classList.toggle('btn-danger',fav);
     btn.classList.toggle('btn-soft',!fav);
   }
@@ -871,7 +2239,101 @@
     thumbs.innerHTML=imgs.map((src,idx)=>`<img src="${src}" class="${idx===pmIdx?'active':''}" onclick="setPmImg(${idx})" alt="" />`).join('');
   }
 
-  function setPmImg(idx){pmIdx=idx;renderProductImages()}
+  function setPmImg(idx){pmIdx=idx;renderProductImages();}
+
+  /* EDIT & DELETE FUNCTIONS */
+  function openEdit(id){
+    const p=products.find(x=>x.id===id);
+    if(!p) return;
+    const u=getUser();
+    if(!u||u.id!==p.userId){toast('Du kan endast redigera dina egna annonser.');return;}
+    
+    isEditing=true;
+    document.getElementById('sId').value=p.id;
+    document.getElementById('sTitle').value=p.title;
+    document.getElementById('sPrice').value=p.price;
+    document.getElementById('sCat').value=p.category;
+    document.getElementById('sLoc').value=p.location;
+    document.getElementById('sDesc').value=p.description||'';
+    document.getElementById('sellModalTitle').textContent='Redigera annons';
+    document.getElementById('publishBtn').textContent='Spara ändringar';
+    
+    sellImgs=[...p.images];
+    renderSellPreview();
+    hide('productModal');
+    show('sellModal');
+  }
+
+  function editCurrentProduct(){
+    if(!currentProduct) return;
+    openEdit(currentProduct.id);
+  }
+
+  function markAsSold(){
+    if(!currentProduct) return;
+    const u=getUser();
+    if(!u||u.id!==currentProduct.userId){toast('Endast säljaren kan markera som såld.');return;}
+    
+    if(currentProduct.status==='sold'){
+      // Unmark
+      currentProduct.status='active';
+      toast('Annons markerad som aktiv igen.');
+    }else{
+      currentProduct.status='sold';
+      toast('Grattis! Annons markerad som såld.');
+    }
+    saveJSON(LS_PRODUCTS,products);
+    hide('productModal');
+    applyFilters();
+    refreshProfileStats();
+    if(!document.getElementById('profilePage').classList.contains('hidden')) setProfileTab('ads');
+  }
+
+  function quickMarkSold(id){
+    const p=products.find(x=>x.id===id);
+    if(!p) return;
+    p.status='sold';
+    saveJSON(LS_PRODUCTS,products);
+    toast('Annons markerad som såld!');
+    refreshProfileStats();
+    setProfileTab('ads');
+    applyFilters();
+  }
+
+  function promptDelete(id){
+    deleteTargetId=id;
+    show('deleteModal');
+  }
+
+  function deleteCurrentProduct(){
+    if(!currentProduct) return;
+    promptDelete(currentProduct.id);
+    hide('productModal');
+  }
+
+  function confirmDelete(){
+    if(!deleteTargetId) return;
+    const reason=document.getElementById('deleteReason').value;
+    const idx=products.findIndex(p=>p.id===deleteTargetId);
+    
+    if(idx>-1){
+      if(reason==='sold'){
+        products[idx].status='sold';
+        toast('Annons markerad som såld.');
+      }else{
+        products[idx].status='deleted';
+        products[idx].deleteReason=reason;
+        toast('Annons borttagen.');
+      }
+      saveJSON(LS_PRODUCTS,products);
+      applyFilters();
+      refreshProfileStats();
+      if(!document.getElementById('profilePage').classList.contains('hidden')) setProfileTab('ads');
+    }
+    
+    hide('deleteModal');
+    deleteTargetId=null;
+  }
 
   /* FAVORITES */
   function loadFavorites(){
@@ -887,22 +2349,28 @@
   }
 
   function isFavorited(productId){
-    const u=getUser();
-    if(!u) return false;
     return loadFavorites().includes(productId);
   }
 
   function toggleFavorite(productId,btn){
     const u=getUser();
-    if(!u){toast('Du måste ha konto för att favoritmarkera.');openAuth('signup');return;}
+    if(!u){toast('Logga in för att spara favoriter.');openAuth('login');return;}
 
     let ids=loadFavorites();
     const willBeFav=!ids.includes(productId);
-    if(willBeFav){ids.push(productId);toast('Sparad som favorit!');}
-    else{ids=ids.filter(x=>x!==productId);toast('Borttagen från favoriter.');}
+    if(willBeFav){
+      ids.push(productId);
+      toast('Sparad i favoriter! ❤️');
+    }else{
+      ids=ids.filter(x=>x!==productId);
+      toast('Borttagen från favoriter.');
+    }
     saveFavorites(ids);
 
-    if(btn){btn.classList.toggle('active',willBeFav);btn.textContent=willBeFav?'❤️':'🤍';}
+    if(btn){
+      btn.classList.toggle('active',willBeFav);
+      btn.textContent=willBeFav?'❤️':'🤍';
+    }
     if(currentProduct&&currentProduct.id===productId) syncModalFavoriteButton();
 
     refreshProfileStats();
@@ -914,14 +2382,27 @@
     }
   }
 
-  function toggleFavoriteFromModal(){if(!currentProduct)return;toggleFavorite(currentProduct.id,null)}
-  function unfavorite(productId){const u=getUser();if(!u)return;saveFavorites(loadFavorites().filter(x=>x!==productId));refreshProfileStats();applyFilters()}
+  function toggleFavoriteFromModal(){
+    if(!currentProduct)return;
+    toggleFavorite(currentProduct.id,null);
+  }
+  
+  function unfavorite(productId){
+    const u=getUser();
+    if(!u)return;
+    saveFavorites(loadFavorites().filter(x=>x!==productId));
+    refreshProfileStats();
+    applyFilters();
+  }
 
   /* PUBLIC SELLER PROFILE */
-  function openSellerProfileFromModal(){if(!currentProduct)return;openSellerProfile(currentProduct.seller,currentProduct.sellerAvatar)}
+  function openSellerProfileFromModal(){
+    if(!currentProduct)return;
+    openSellerProfile(currentProduct.seller,currentProduct.sellerAvatar);
+  }
 
   function openSellerProfile(name,ava){
-    document.getElementById('sellerTitle').textContent='Profil: '+name;
+    document.getElementById('sellerTitle').textContent=name;
     document.getElementById('sellerName').textContent=name;
     document.getElementById('sellerAva').textContent=ava||initials(name);
 
@@ -931,9 +2412,21 @@
 
     renderSellerReviews(name);
 
-    const ads=products.filter(p=>p.seller===name);
+    const ads=products.filter(p=>p.seller===name&&p.status!=='deleted');
     const box=document.getElementById('sellerAds');
-    box.innerHTML=ads.length?ads.map(p=>`<div class="panel panel-pad"><div class="item"><img class="thumb" src="${p.images[0]}" alt="" /><div class="item-main"><div class="item-title">${escapeHtml(p.title)}</div><div class="item-sub">${p.price} kr • ${escapeHtml(p.location)}</div><div class="item-actions"><button class="btn btn-soft" onclick="hide('sellerModal');openProduct(${p.id});">Visa</button><button class="btn btn-primary" onclick="hide('sellerModal');openProduct(${p.id});messageSeller();">Skriv</button></div></div></div></div>`).join(''):`<div class="panel panel-pad"><div style="font-size:12px;color:var(--mut);font-weight:900">Inga annonser hittades.</div></div>`;
+    box.innerHTML=ads.length?ads.map(p=>{
+      const isSold=p.status==='sold';
+      return `<div class="panel ${isSold?'sold':''}" style="${isSold?'opacity:0.6':''};cursor:${isSold?'default':'pointer'}" onclick="${isSold?'':'hide(\'sellerModal\');openProduct('+p.id+');'}">
+        <div class="item" style="border:none;background:transparent">
+          <img class="thumb" src="${p.images[0]}" alt="" style="${isSold?'filter:grayscale(1)':''}" />
+          <div class="item-main">
+            <div class="item-title" style="${isSold?'text-decoration:line-through':''}">${escapeHtml(p.title)} ${isSold?'<span style="color:var(--danger);font-size:12px;margin-left:8px">(SÅLD)</span>':''}</div>
+            <div class="item-sub">${p.price} kr • ${escapeHtml(p.location)}</div>
+            ${!isSold?`<div class="item-actions"><button class="btn btn-primary" onclick="event.stopPropagation();hide('sellerModal');openProduct(${p.id});messageSeller();">Skriv till säljare</button></div>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join(''):`<div class="panel panel-pad" style="text-align:center;color:var(--text-secondary)">Inga aktiva annonser från denna säljare.</div>`;
 
     show('sellerModal');
   }
@@ -941,7 +2434,7 @@
   /* SELL */
   function openSell(){
     const u=getUser();
-    if(!u){toast('Skapa konto / logga in för att kunna sälja.');openAuth('signup');return;}
+    if(!u){toast('Logga in för att sälja.');openAuth('signup');return;}
     resetSellForm();
     show('sellModal');
   }
@@ -951,8 +2444,14 @@
       sellImgs=[];
       const files=Array.from(document.getElementById('sImgs').files||[]).slice(0,6);
       if(!files.length){renderSellPreview();return;}
-      try{sellImgs=await Promise.all(files.map(fileToDataUrl));renderSellPreview();}
-      catch{sellImgs=[];toast('Kunde inte läsa en eller flera bilder.');renderSellPreview();}
+      try{
+        sellImgs=await Promise.all(files.map(fileToDataUrl));
+        renderSellPreview();
+      }catch{
+        sellImgs=[];
+        toast('Kunde inte läsa bilderna.');
+        renderSellPreview();
+      }
     });
   }
 
@@ -960,12 +2459,13 @@
     document.getElementById('sPreview').innerHTML=sellImgs.map((src,idx)=>`<div class="preview-item"><img src="${src}" alt="" /><button onclick="removeSellImg(${idx})" title="Ta bort">✕</button></div>`).join('');
   }
 
-  function removeSellImg(idx){sellImgs.splice(idx,1);renderSellPreview()}
+  function removeSellImg(idx){sellImgs.splice(idx,1);renderSellPreview();}
 
   function publish(){
     const u=getUser();
-    if(!u){toast('Logga in för att publicera annons.');openAuth('login');return;}
+    if(!u){toast('Logga in för att publicera.');openAuth('login');return;}
 
+    const editId=document.getElementById('sId').value;
     const title=document.getElementById('sTitle').value.trim();
     const priceRaw=document.getElementById('sPrice').value;
     const category=document.getElementById('sCat').value;
@@ -974,40 +2474,58 @@
 
     if(!title||!priceRaw) return toast('Fyll i titel och pris.');
     const price=parseInt(priceRaw,10);
-    if(!Number.isFinite(price)||price<0) return toast('Pris måste vara ett giltigt nummer.');
+    if(!Number.isFinite(price)||price<0) return toast('Ogiltigt pris.');
     if(sellImgs.length<1) return toast('Lägg till minst 1 bild.');
 
-    const p={
-      id:nextId(products),
-      title,
-      short:title.length>22?title.slice(0,22)+'…':title,
-      price,
-      category,
-      location,
-      images:[...sellImgs],
-      seller:u.name,
-      sellerAvatar:initials(u.name),
-      userId:u.id,
-      date:'Just nu',
-      description:description||'Ingen beskrivning.'
-    };
-
-    products.unshift(p);
-    saveJSON(LS_PRODUCTS,products);
-    hide('sellModal');
-    toast('Annons publicerad!');
+    if(editId){
+      // Edit existing
+      const idx=products.findIndex(p=>p.id===parseInt(editId));
+      if(idx===-1) return toast('Annonsen hittades inte.');
+      if(products[idx].userId!==u.id) return toast('Du kan endast redigera egna annonser.');
+      
+      products[idx]={...products[idx],title,short:title.length>22?title.slice(0,22)+'…':title,price,category,location,description:description||'Ingen beskrivning.',images:[...sellImgs]};
+      saveJSON(LS_PRODUCTS,products);
+      hide('sellModal');
+      toast('Annons uppdaterad!');
+    }else{
+      // Create new
+      const p={
+        id:nextId(products),
+        title,
+        short:title.length>22?title.slice(0,22)+'…':title,
+        price,
+        category,
+        location,
+        images:[...sellImgs],
+        seller:u.name,
+        sellerAvatar:initials(u.name),
+        userId:u.id,
+        date:'Just nu',
+        description:description||'Ingen beskrivning.',
+        status:'active'
+      };
+      products.unshift(p);
+      saveJSON(LS_PRODUCTS,products);
+      hide('sellModal');
+      toast('Annons publicerad! 🎉');
+    }
+    
     applyFilters();
     refreshProfileStats();
     if(!document.getElementById('profilePage').classList.contains('hidden')) setProfileTab('ads');
   }
 
   function resetSellForm(){
+    isEditing=false;
+    document.getElementById('sId').value='';
     document.getElementById('sTitle').value='';
     document.getElementById('sPrice').value='';
     document.getElementById('sDesc').value='';
     document.getElementById('sLoc').value='Stockholm';
     document.getElementById('sCat').value='leksaker';
     document.getElementById('sImgs').value='';
+    document.getElementById('sellModalTitle').textContent='Ny annons';
+    document.getElementById('publishBtn').textContent='Publicera';
     sellImgs=[];
     renderSellPreview();
   }
@@ -1049,34 +2567,52 @@
 
   function openChatPanel(){
     const u=getUser();
-    if(!u){toast('Logga in för att använda chatten.');openAuth('login');return;}
+    if(!u){toast('Logga in för att chatta.');openAuth('login');return;}
     show('chatOverlay');
     show('chat');
     ensureChatLayout();
     renderConversations();
   }
 
-  function closeChatPanel(){hide('chatOverlay');hide('chat');backToConversations()}
-  function isChatOpen(){return document.getElementById('chat').classList.contains('show')}
+  function closeChatPanel(){
+    hide('chatOverlay');
+    hide('chat');
+    backToConversations();
+  }
+  
+  function isChatOpen(){return document.getElementById('chat').classList.contains('show');}
 
   function ensureChatLayout(){
     const isMobile=window.innerWidth<=768;
     const main=document.getElementById('chatMain');
-    if(isMobile){if(currentChat) main.classList.add('active'); else main.classList.remove('active');}
-    else main.classList.add('active');
+    if(isMobile){
+      if(currentChat) main.classList.add('active');
+      else main.classList.remove('active');
+    }else{
+      main.classList.add('active');
+    }
   }
 
   function renderConversations(){
     const list=document.getElementById('convList');
     const u=getUser();
-    if(!u){list.innerHTML='<div style="padding:12px;font-size:12px;color:var(--mut);font-weight:900">Logga in för att se konversationer.</div>';return;}
-    if(!conversations.length){list.innerHTML='<div style="padding:12px;font-size:12px;color:var(--mut);font-weight:900">Inga konversationer än.</div>';return;}
+    if(!u){
+      list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-secondary)">Logga in för att se meddelanden.</div>';
+      return;
+    }
+    if(!conversations.length){
+      list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-secondary)">Inga konversationer än.</div>';
+      return;
+    }
 
     list.innerHTML=conversations.map(c=>`
       <div class="conv ${currentChat&&currentChat.id===c.id?'active':''}" onclick="openChat(${c.id})">
         <div class="seller-badge">${escapeHtml(c.avatar)}</div>
         <div style="min-width:0;flex:1">
-          <div style="display:flex;justify-content:space-between;gap:6px"><div class="n">${escapeHtml(c.with)}</div><div class="t">${escapeHtml(c.time)}</div></div>
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px">
+            <div class="n">${escapeHtml(c.with)}</div>
+            <div class="t">${escapeHtml(c.time)}</div>
+          </div>
           <div class="p">${escapeHtml(c.product)} • ${escapeHtml(c.lastMessage)}</div>
         </div>
       </div>
@@ -1094,6 +2630,11 @@
     renderMessages();
     renderConversations();
     ensureChatLayout();
+    
+    // Focus input on desktop
+    if(window.innerWidth>768){
+      setTimeout(()=>document.getElementById('msgIn').focus(),100);
+    }
   }
 
   function backToConversations(){
@@ -1111,7 +2652,7 @@
     box.scrollTop=box.scrollHeight;
   }
 
-  function onEnter(e){if(e.key==='Enter') sendMsg()}
+  function onEnter(e){if(e.key==='Enter') sendMsg();}
 
   function sendMsg(){
     if(!currentChat) return;
@@ -1128,6 +2669,7 @@
     renderMessages();
     renderConversations();
 
+    // Simulate reply
     setTimeout(()=>{
       const replies=['Hej! Ja, den finns kvar 😊','Absolut! När vill du hämta?','Toppen — jag kan mötas upp i eftermiddag.','Jag kan sänka lite om du hämtar idag.'];
       const r=replies[Math.floor(Math.random()*replies.length)];
@@ -1138,7 +2680,8 @@
       saveConversations();
       renderMessages();
       renderConversations();
-    },900);
+      if(!isChatOpen()) updateBadge();
+    },1200);
   }
 
   function updateBadge(){
@@ -1152,9 +2695,10 @@
 
   function messageSeller(){
     const u=getUser();
-    if(!u){toast('Logga in eller skapa konto för att skriva till säljaren.');openAuth('login');return;}
+    if(!u){toast('Logga in för att kontakta säljaren.');openAuth('login');return;}
     if(!currentProduct) return;
-    if(currentProduct.userId===u.id){toast('Det här är din egen annons.');return;}
+    if(currentProduct.userId===u.id){toast('Detta är din egen annons.');return;}
+    if(currentProduct.status==='sold'){toast('Denna vara är redan såld.');return;}
 
     let conv=conversations.find(c=>c.productId===currentProduct.id);
     if(!conv){
@@ -1177,21 +2721,16 @@
     openChat(conv.id);
   }
 
-  /* REVIEWS (seller) */
-  function loadReviews(sellerName){
-    return loadJSON(reviewsKey(sellerName),[]);
-  }
-
-  function saveReviews(sellerName,revs){
-    saveJSON(reviewsKey(sellerName),revs);
-  }
+  /* REVIEWS */
+  function loadReviews(sellerName){return loadJSON(reviewsKey(sellerName),[]);}
+  function saveReviews(sellerName,revs){saveJSON(reviewsKey(sellerName),revs);}
 
   function getSellerStats(sellerName){
     const revs=loadReviews(sellerName);
     const count=revs.length;
     const sum=revs.reduce((a,r)=>a+(Number(r.rating)||0),0);
     const avg=count?sum/count:0;
-    const ads=products.filter(p=>p.seller===sellerName).length;
+    const ads=products.filter(p=>p.seller===sellerName&&p.status!=='deleted').length;
     return {count,avg,ads};
   }
 
@@ -1203,8 +2742,8 @@
       const on=i<=full;
       html+=`<span class="star ${on?'':'muted'}">★</span>`;
     }
-    const label=v?`${v.toFixed(1)}/5`:'Ingen rating';
-    return `<span class="stars" title="${label}">${html}</span><span style="font-size:12px;color:var(--mut);font-weight:1000;margin-left:6px">${v?label:'Ingen rating'}</span>`;
+    const label=v?`${v.toFixed(1)}/5`:'Inga omdömen';
+    return `<span class="stars" title="${label}">${html}</span><span style="font-size:13px;color:var(--text-secondary);font-weight:600;margin-left:8px">${v?label:'Inga omdömen'}</span>`;
   }
 
   function renderSellerReviews(sellerName){
@@ -1215,42 +2754,38 @@
     const revs=loadReviews(sellerName);
     revBox.innerHTML=revs.length?revs.slice().reverse().map(r=>{
       const filled=Math.max(0,Math.min(5,Number(r.rating)||0));
-      const stars='★'.repeat(filled)+Array.from({length:5-filled}).map(()=>'<span class="star muted">★</span>').join('');
-      return `<div class="review">
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <div style="font-weight:1100">${escapeHtml(r.author||'Anonym')}</div>
+      const stars='★'.repeat(filled)+'<span class="star muted">★</span>'.repeat(5-filled);
+      return `<div class="panel" style="margin-bottom:12px">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+          <div style="font-weight:700">${escapeHtml(r.author||'Anonym')}</div>
           <div class="stars">${stars}</div>
         </div>
-        <div style="margin-top:8px">${escapeHtml(r.text||'')}</div>
-        <div class="meta"><span>${escapeHtml(r.date||'')}</span></div>
+        <div style="color:var(--text);line-height:1.6">${escapeHtml(r.text||'')}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:8px;font-weight:500">${escapeHtml(r.date||'')}</div>
       </div>`;
-    }).join(''):`<div style="font-size:12px;color:var(--mut);font-weight:1000">Inga omdömen ännu.</div>`;
+    }).join(''):`<div style="text-align:center;padding:20px;color:var(--text-secondary)">Inga omdömen ännu.</div>`;
 
     if(!u){
-      form.innerHTML='<div style="font-size:12px;color:var(--mut);font-weight:1000">Logga in för att betygsätta och kommentera säljaren.</div><div style="margin-top:10px"><button class="btn btn-primary" onclick="openAuth(\'login\')">Logga in</button></div>';
+      form.innerHTML='<div style="text-align:center;color:var(--text-secondary);margin-bottom:12px">Logga in för att lämna omdöme</div><button class="btn btn-primary" style="width:100%" onclick="openAuth(\'login\')">Logga in</button>';
       window.__activeSellerForReview=null;
       return;
     }
 
     form.innerHTML=`
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <div style="font-weight:1000">Ditt betyg</div>
-        <select id="reviewRating" style="max-width:140px">
-          <option value="5">5</option>
-          <option value="4">4</option>
-          <option value="3">3</option>
-          <option value="2">2</option>
-          <option value="1">1</option>
+      <div style="font-weight:700;margin-bottom:12px">Lämna omdöme</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <label style="font-weight:600">Betyg:</label>
+        <select id="reviewRating" style="width:auto;min-width:100px">
+          <option value="5">5 ⭐</option>
+          <option value="4">4 ⭐</option>
+          <option value="3">3 ⭐</option>
+          <option value="2">2 ⭐</option>
+          <option value="1">1 ⭐</option>
         </select>
       </div>
-      <div style="font-weight:1000;margin-top:10px;margin-bottom:6px">Kommentar</div>
-      <textarea id="reviewText" rows="3" placeholder="Skriv en kort kommentar…"></textarea>
-      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="submitSellerReview()">Skicka omdöme</button>
-        <div style="font-size:12px;color:var(--mut);font-weight:1000">(Demo: sparas lokalt)</div>
-      </div>
+      <textarea id="reviewText" rows="3" placeholder="Din kommentar..." style="margin-bottom:12px;resize:vertical"></textarea>
+      <button class="btn btn-primary" onclick="submitSellerReview()" style="width:100%">Skicka omdöme</button>
     `;
-
     window.__activeSellerForReview=sellerName;
   }
 
@@ -1258,11 +2793,11 @@
     const sellerName=window.__activeSellerForReview;
     if(!sellerName) return;
     const u=getUser();
-    if(!u){toast('Logga in för att lämna omdöme.');openAuth('login');return;}
+    if(!u){toast('Logga in för att betygsätta.');openAuth('login');return;}
 
     const rating=parseInt((document.getElementById('reviewRating')||{}).value||'5',10);
     const text=(document.getElementById('reviewText')||{}).value||'';
-    if(!text.trim()) return toast('Skriv en kommentar först.');
+    if(!text.trim()) return toast('Skriv en kommentar.');
 
     const revs=loadReviews(sellerName);
     revs.push({author:u.name,rating:Math.max(1,Math.min(5,rating)),text:text.trim(),date:new Date().toLocaleDateString('sv-SE')});
@@ -1273,14 +2808,24 @@
     document.getElementById('sellerCounts').textContent=`${stats.count} omdömen • ${stats.ads} annonser`;
 
     renderSellerReviews(sellerName);
-    toast('Omdöme sparat!');
+    toast('Omdöme sparat! ⭐');
   }
 
   /* MODALS */
-  function closeOnBackdrop(e){if(e.target===e.currentTarget) hide(e.currentTarget.id)}
-  function closeAllModals(){['productModal','authModal','sellModal','sellerModal','editProfileModal'].forEach(hide)}
-  function show(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden'}
-  function hide(id){document.getElementById(id).classList.remove('show');document.body.style.overflow=''}
+  function closeOnBackdrop(e){if(e.target===e.currentTarget) hide(e.currentTarget.id);}
+  function closeAllModals(){
+    ['productModal','authModal','sellModal','sellerModal','editProfileModal','deleteModal'].forEach(hide);
+  }
+  function show(id){
+    const el=document.getElementById(id);
+    el.classList.add('show');
+    if(window.innerWidth<=768) document.body.style.overflow='hidden';
+  }
+  function hide(id){
+    const el=document.getElementById(id);
+    el.classList.remove('show');
+    if(!document.querySelector('.modal.show')) document.body.style.overflow='';
+  }
 
   /* TOAST */
   function toast(msg){
@@ -1288,7 +2833,7 @@
     t.textContent=msg;
     t.classList.add('show');
     clearTimeout(window.__toastT);
-    window.__toastT=setTimeout(()=>t.classList.remove('show'),2400);
+    window.__toastT=setTimeout(()=>t.classList.remove('show'),3000);
   }
 
   /* UTILS */
@@ -1309,16 +2854,16 @@
       .replaceAll("'",'&#039;');
   }
 
-  function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
-  function uid(){return 'u_'+Math.random().toString(16).slice(2)+Date.now().toString(16)}
-  function nextId(arr){return arr.length?Math.max(...arr.map(x=>x.id))+1:1}
+  function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+  function uid(){return 'u_'+Math.random().toString(16).slice(2)+Date.now().toString(16);}
+  function nextId(arr){return arr.length?Math.max(...arr.map(x=>x.id))+1:1;}
 
   function loadJSON(key,fallback){
-    try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback))}
-    catch{return fallback}
+    try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}
+    catch{return fallback;}
   }
 
-  function saveJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
+  function saveJSON(key,val){localStorage.setItem(key,JSON.stringify(val));}
 
   function fileToDataUrl(file){
     return new Promise((resolve,reject)=>{
@@ -1339,11 +2884,11 @@
   /* SEED */
   function seedProducts(){
     return [
-      {id:1,title:'Bugaboo Cameleon 3 - Svart',short:'Bugaboo Cameleon 3',price:2500,category:'barnvagn',location:'Stockholm',images:['https://images.unsplash.com/photo-1566004100631-35d015d6a491?w=1200&auto=format&fit=crop','https://images.unsplash.com/photo-1520975916090-3105956dac38?w=1200&auto=format&fit=crop'],seller:'Anna S.',sellerAvatar:'AS',userId:'seed_anna',date:'Idag',description:'Väl-skött Bugaboo Cameleon 3 i svart färg. Inkluderar liggdel, sittdel och regnskydd. Rökfritt hem.'},
-      {id:2,title:'Britax Max-Way Bilbarnstol 9-25kg',short:'Britax Bilbarnstol',price:1200,category:'bilbarnstol',location:'Göteborg',images:['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&auto=format&fit=crop','https://images.unsplash.com/photo-1520975958221-34b7b7a5f4ac?w=1200&auto=format&fit=crop'],seller:'Johan P.',sellerAvatar:'JP',userId:'seed_johan',date:'Igår',description:'Säker och bekväm stol. Aldrig varit med om olycka. Instruktioner ingår.'},
-      {id:3,title:'LEGO Duplo Stor Låda - 100+ bitar',short:'LEGO Duplo',price:350,category:'leksaker',location:'Malmö',images:['https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?w=1200&auto=format&fit=crop','https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=1200&auto=format&fit=crop'],seller:'Maria L.',sellerAvatar:'ML',userId:'seed_maria',date:'2 dagar sedan',description:'Stor samling LEGO Duplo. Alla bitar hela och rena. Perfekt för 1–5 år.'},
-      {id:4,title:'IKEA Sundvik Spjälsäng med madrass',short:'IKEA Sundvik',price:800,category:'möbler',location:'Uppsala',images:['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&auto=format&fit=crop','https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&auto=format&fit=crop'],seller:'Erik N.',sellerAvatar:'EN',userId:'seed_erik',date:'3 dagar sedan',description:'Vit spjälsäng med justerbar botten. Madrass ingår. Mindre skav men stabil.'},
-      {id:5,title:'Polarn O. Pyret Vinteroverall 92cl',short:'Vinteroverall 92',price:450,category:'kläder',location:'Stockholm',images:['https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=1200&auto=format&fit=crop','https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&auto=format&fit=crop'],seller:'Sofia K.',sellerAvatar:'SK',userId:'seed_sofia',date:'Idag',description:'Varm och skön overall. Använd en säsong. Reflexdetaljer.'}
+      {id:1,title:'Bugaboo Cameleon 3 - Svart',short:'Bugaboo Cameleon 3',price:2500,category:'barnvagn',location:'Stockholm',images:['https://images.unsplash.com/photo-1566004100631-35d015d6a491?w=800&q=80','https://images.unsplash.com/photo-1520975916090-3105956dac38?w=800&q=80'],seller:'Anna S.',sellerAvatar:'AS',userId:'seed_anna',date:'Idag',description:'Väl-skött Bugaboo Cameleon 3 i svart färg. Inkluderar liggdel, sittdel och regnskydd. Rökfritt hem.',status:'active'},
+      {id:2,title:'Britax Max-Way Bilbarnstol 9-25kg',short:'Britax Bilbarnstol',price:1200,category:'bilbarnstol',location:'Göteborg',images:['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80','https://images.unsplash.com/photo-1520975958221-34b7b7a5f4ac?w=800&q=80'],seller:'Johan P.',sellerAvatar:'JP',userId:'seed_johan',date:'Igår',description:'Säker och bekväm stol. Aldrig varit med om olycka. Instruktioner ingår.',status:'active'},
+      {id:3,title:'LEGO Duplo Stor Låda - 100+ bitar',short:'LEGO Duplo',price:350,category:'leksaker',location:'Malmö',images:['https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?w=800&q=80','https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800&q=80'],seller:'Maria L.',sellerAvatar:'ML',userId:'seed_maria',date:'2 dagar sedan',description:'Stor samling LEGO Duplo. Alla bitar hela och rena. Perfekt för 1–5 år.',status:'active'},
+      {id:4,title:'IKEA Sundvik Spjälsäng med madrass',short:'IKEA Sundvik',price:800,category:'möbler',location:'Uppsala',images:['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80','https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80'],seller:'Erik N.',sellerAvatar:'EN',userId:'seed_erik',date:'3 dagar sedan',description:'Vit spjälsäng med justerbar botten. Madrass ingår. Mindre skav men stabil.',status:'active'},
+      {id:5,title:'Polarn O. Pyret Vinteroverall 92cl',short:'Vinteroverall 92',price:450,category:'kläder',location:'Stockholm',images:['https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=800&q=80','https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80'],seller:'Sofia K.',sellerAvatar:'SK',userId:'seed_sofia',date:'Idag',description:'Varm och skön overall. Använd en säsong. Reflexdetaljer.',status:'active'}
     ];
   }
 </script>
