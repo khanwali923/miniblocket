@@ -75,7 +75,28 @@
     .pm-title{font-weight:1100;font-size:20px}
     .pm-price{font-weight:1100;font-size:22px;color:#0369a1;margin-top:4px}
     .pm-meta{margin-top:10px;color:#475569;font-weight:900;font-size:13px}
-    .seller-card{margin-top:14px;border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--soft2);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .seller-card{margin-top:14px;border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--soft2);
+  display:grid;gap:12px;align-items:center;
+  grid-template-columns:44px 1fr;
+  grid-template-areas:"ava info" "btn btn";
+}
+.seller-card .seller-badge{grid-area:ava;width:44px;height:44px;font-size:14px}
+.seller-card .seller-info-wrap{grid-area:info;min-width:0}
+.seller-card .btn{grid-area:btn;justify-content:center;width:100%}
+
+/* desktop: knappen på samma rad utan att täcka info */
+@media (min-width: 769px){
+  .seller-card{grid-template-columns:56px 1fr auto;grid-template-areas:"ava info btn";}
+  .seller-card .seller-badge{width:46px;height:46px;font-size:14px}
+  .seller-card .btn{width:auto;min-width:160px}
+}
+
+.stars{display:inline-flex;gap:2px;align-items:center;font-weight:1100}
+.star{font-size:14px;line-height:1}
+.star.muted{opacity:.25}
+.review{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+.review .meta{display:flex;justify-content:space-between;gap:10px;color:var(--mut);font-weight:1000;font-size:12px;margin-top:6px}
+.review-form{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--soft2)}
     .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-weight:1000;font-size:12px;color:#334155}
     .chip.good{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
 
@@ -152,6 +173,18 @@
       .chat-main.active{display:flex}
       .thumb{width:100%;height:160px}
       .item-main{min-width:0}
+
+      /* bättre mobil-layout i annons-modal */
+      .head{position:sticky;top:0;z-index:5;background:#fff}
+      .pad{padding:14px}
+      .seller-card{grid-template-columns:44px 1fr;}
+      .seller-card .btn{grid-column:1/-1;width:100%}
+      .pm-title{font-size:18px}
+      .pm-price{font-size:20px}
+      .thumbs img{width:64px;height:50px}
+
+      /* profil */
+      .profile-topbar{position:sticky;top:74px;background:rgba(240,249,255,.92);backdrop-filter:blur(6px);padding:10px 0;z-index:20}
     }
   </style>
 </head>
@@ -215,6 +248,10 @@
 </div>
 
 <div class="container page hidden" id="profilePage">
+  <div class="profile-topbar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+    <button class="btn btn-soft" onclick="showHome()">← Till alla annonser</button>
+    <div style="font-weight:1100;color:#334155">Min profil</div>
+  </div>
   <div class="profile-layout">
     <div class="panel" style="overflow:hidden">
       <div class="profile-banner"></div>
@@ -306,7 +343,7 @@
 
           <div class="seller-card">
             <div class="seller-badge" id="pmSellerAva">??</div>
-            <div style="flex:1;min-width:0">
+            <div class="seller-info-wrap">
               <div style="font-weight:1100" id="pmSeller">—</div>
               <div style="font-size:12px;color:var(--mut);font-weight:1000" id="pmSellerLine">Säljare</div>
             </div>
@@ -407,12 +444,23 @@
       <div class="panel panel-pad" style="margin-bottom:12px">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <div class="seller-badge" style="width:46px;height:46px;font-size:14px" id="sellerAva">??</div>
-          <div>
+          <div style="min-width:0">
             <div style="font-weight:1100" id="sellerName">—</div>
-            <div style="font-size:12px;color:var(--mut);font-weight:900">⭐️⭐️⭐️⭐️⭐️ (demo)</div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+              <div id="sellerStars" class="stars" aria-label="Betyg">—</div>
+              <div style="font-size:12px;color:var(--mut);font-weight:1000" id="sellerCounts">—</div>
+            </div>
           </div>
         </div>
       </div>
+
+      <div class="panel panel-pad" style="margin-bottom:12px">
+        <div style="font-weight:1100;margin-bottom:8px">Omdömen</div>
+        <div id="sellerReviews" class="list"></div>
+        <div id="sellerReviewForm" class="review-form" style="margin-top:10px"></div>
+      </div>
+
+      <div style="font-weight:1100;margin-bottom:8px">Annonser från säljaren</div>
       <div class="list" id="sellerAds"></div>
     </div>
   </div>
@@ -436,10 +484,12 @@
   const LS_FAV_PREFIX='mb_fav_';
   const LS_CONV_PREFIX='mb_conv_';
   const LS_PROFILE_PREFIX='mb_profile_';
+  const LS_REV_PREFIX='mb_reviews_';
 
   function favKey(uid){return LS_FAV_PREFIX+uid+'_v1'}
   function convKey(uid){return LS_CONV_PREFIX+uid+'_v1'}
   function profileKey(uid){return LS_PROFILE_PREFIX+uid+'_v1'}
+  function reviewsKey(sellerName){return LS_REV_PREFIX+String(sellerName||'').toLowerCase()+'_v1'}
 
   let authMode='signup';
   let session=loadJSON(LS_SESSION,null);
@@ -859,9 +909,16 @@
     document.getElementById('sellerName').textContent=name;
     document.getElementById('sellerAva').textContent=ava||initials(name);
 
+    const stats=getSellerStats(name);
+    document.getElementById('sellerStars').innerHTML=renderStars(stats.avg);
+    document.getElementById('sellerCounts').textContent=`${stats.count} omdömen • ${stats.ads} annonser`;
+
+    renderSellerReviews(name);
+
     const ads=products.filter(p=>p.seller===name);
     const box=document.getElementById('sellerAds');
     box.innerHTML=ads.length?ads.map(p=>`<div class="panel panel-pad"><div class="item"><img class="thumb" src="${p.images[0]}" alt="" /><div class="item-main"><div class="item-title">${escapeHtml(p.title)}</div><div class="item-sub">${p.price} kr • ${escapeHtml(p.location)}</div><div class="item-actions"><button class="btn btn-soft" onclick="hide('sellerModal');openProduct(${p.id});">Visa</button><button class="btn btn-primary" onclick="hide('sellerModal');openProduct(${p.id});messageSeller();">Skriv</button></div></div></div></div>`).join(''):`<div class="panel panel-pad"><div style="font-size:12px;color:var(--mut);font-weight:900">Inga annonser hittades.</div></div>`;
+
     show('sellerModal');
   }
 
@@ -1102,6 +1159,105 @@
     hide('productModal');
     openChatPanel();
     openChat(conv.id);
+  }
+
+  /* REVIEWS (seller) */
+  function loadReviews(sellerName){
+    return loadJSON(reviewsKey(sellerName),[]);
+  }
+
+  function saveReviews(sellerName,revs){
+    saveJSON(reviewsKey(sellerName),revs);
+  }
+
+  function getSellerStats(sellerName){
+    const revs=loadReviews(sellerName);
+    const count=revs.length;
+    const sum=revs.reduce((a,r)=>a+(Number(r.rating)||0),0);
+    const avg=count?sum/count:0;
+    const ads=products.filter(p=>p.seller===sellerName).length;
+    return {count,avg,ads};
+  }
+
+  function renderStars(avg){
+    const v=Math.max(0,Math.min(5,avg||0));
+    const full=Math.floor(v+1e-6);
+    let html='';
+    for(let i=1;i<=5;i++){
+      const on=i<=full;
+      html+=`<span class="star ${on?'':'muted'}">★</span>`;
+    }
+    const label=v?`${v.toFixed(1)}/5`:'Ingen rating';
+    return `<span class="stars" title="${label}">${html}</span><span style="font-size:12px;color:var(--mut);font-weight:1000;margin-left:6px">${v?label:'Ingen rating'}</span>`;
+  }
+
+  function renderSellerReviews(sellerName){
+    const u=getUser();
+    const revBox=document.getElementById('sellerReviews');
+    const form=document.getElementById('sellerReviewForm');
+
+    const revs=loadReviews(sellerName);
+    revBox.innerHTML=revs.length?revs.slice().reverse().map(r=>{
+      const filled=Math.max(0,Math.min(5,Number(r.rating)||0));
+      const stars='★'.repeat(filled)+Array.from({length:5-filled}).map(()=>'<span class="star muted">★</span>').join('');
+      return `<div class="review">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div style="font-weight:1100">${escapeHtml(r.author||'Anonym')}</div>
+          <div class="stars">${stars}</div>
+        </div>
+        <div style="margin-top:8px">${escapeHtml(r.text||'')}</div>
+        <div class="meta"><span>${escapeHtml(r.date||'')}</span></div>
+      </div>`;
+    }).join(''):`<div style="font-size:12px;color:var(--mut);font-weight:1000">Inga omdömen ännu.</div>`;
+
+    if(!u){
+      form.innerHTML='<div style="font-size:12px;color:var(--mut);font-weight:1000">Logga in för att betygsätta och kommentera säljaren.</div><div style="margin-top:10px"><button class="btn btn-primary" onclick="openAuth(\'login\')">Logga in</button></div>';
+      window.__activeSellerForReview=null;
+      return;
+    }
+
+    form.innerHTML=`
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="font-weight:1000">Ditt betyg</div>
+        <select id="reviewRating" style="max-width:140px">
+          <option value="5">5</option>
+          <option value="4">4</option>
+          <option value="3">3</option>
+          <option value="2">2</option>
+          <option value="1">1</option>
+        </select>
+      </div>
+      <div style="font-weight:1000;margin-top:10px;margin-bottom:6px">Kommentar</div>
+      <textarea id="reviewText" rows="3" placeholder="Skriv en kort kommentar…"></textarea>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="submitSellerReview()">Skicka omdöme</button>
+        <div style="font-size:12px;color:var(--mut);font-weight:1000">(Demo: sparas lokalt)</div>
+      </div>
+    `;
+
+    window.__activeSellerForReview=sellerName;
+  }
+
+  function submitSellerReview(){
+    const sellerName=window.__activeSellerForReview;
+    if(!sellerName) return;
+    const u=getUser();
+    if(!u){toast('Logga in för att lämna omdöme.');openAuth('login');return;}
+
+    const rating=parseInt((document.getElementById('reviewRating')||{}).value||'5',10);
+    const text=(document.getElementById('reviewText')||{}).value||'';
+    if(!text.trim()) return toast('Skriv en kommentar först.');
+
+    const revs=loadReviews(sellerName);
+    revs.push({author:u.name,rating:Math.max(1,Math.min(5,rating)),text:text.trim(),date:new Date().toLocaleDateString('sv-SE')});
+    saveReviews(sellerName,revs);
+
+    const stats=getSellerStats(sellerName);
+    document.getElementById('sellerStars').innerHTML=renderStars(stats.avg);
+    document.getElementById('sellerCounts').textContent=`${stats.count} omdömen • ${stats.ads} annonser`;
+
+    renderSellerReviews(sellerName);
+    toast('Omdöme sparat!');
   }
 
   /* MODALS */
