@@ -128,6 +128,13 @@ import { CONFIG, ENV } from './config.js';
       console.error("Init error:", err);
       showToast("Fel vid uppstart: " + err.message);
     }
+    
+    setInterval(async () => {
+  if (currentUser) {
+    await updateChatBadge();
+  }
+}, 10000);
+
   };
 
   async function loadProducts() {
@@ -366,7 +373,7 @@ import { CONFIG, ENV } from './config.js';
     console.log("Användare inloggad:", currentUser.id, currentUser.name);
     await refreshFavoritesCache();
     applyLoggedInUI(currentUser);
-    updateStats();
+    updateChatBadge();
     showToast('Välkommen ' + currentUser.name + '!');
   }
 
@@ -424,7 +431,7 @@ import { CONFIG, ENV } from './config.js';
     document.getElementById('pageProfile').classList.add('active');
     switchTab('active', document.querySelector('#pageProfile .tab-btn'));
     document.getElementById('userMenu').classList.add('hidden');
-    updateStats();
+    updateChatBadge();
     window.scrollTo(0, 0);
   }
 
@@ -475,7 +482,7 @@ import { CONFIG, ENV } from './config.js';
     }
     
     renderProducts();
-    updateStats();
+    updateChatBadge();
     
     if (document.getElementById('pageProfile').classList.contains('active') && currentProfileTab === 'favorites') {
       const activeBtn = document.querySelector('#pageProfile .tab-btn.active');
@@ -554,8 +561,8 @@ import { CONFIG, ENV } from './config.js';
       const imgUrl = (p.images && p.images.length) ? p.images[0] : DEFAULT_IMAGE;
       return `
         <div class="card ${p.status === 'sold' ? 'sold' : ''}" onclick="openProduct('${p.id}')">
-          <div style="position: relative;">
-            <img src="${imgUrl}" class="card-img" alt="${escapeHtml(p.title)}" onerror="this.src='${DEFAULT_IMAGE}'">
+          <div style="position: relative;"><img src="${imgUrl}" class="card-img" alt="${escapeHtml(p.title)}" onerror="this.src='${DEFAULT_IMAGE}'">
+            
             ${p.status === 'pending' ? '<div class="badge-pending">VÄNTAR</div>' : ''}
             <button class="fav-btn ${isFav ? 'active' : ''}" 
                     onclick="event.stopPropagation(); toggleFav('${p.id}', event)"
@@ -709,7 +716,7 @@ import { CONFIG, ENV } from './config.js';
     if (!currentUser) return;
     localFavorites.delete(String(productId));
     showToast('Borttagen från favoriter');
-    updateStats();
+    updateChatBadge();
     const activeBtn = document.querySelector('#pageProfile .tab-btn.active');
     if (activeBtn && currentProfileTab === 'favorites') {
       switchTab('favorites', activeBtn);
@@ -736,7 +743,7 @@ import { CONFIG, ENV } from './config.js';
       renderProducts();
       const activeBtn = document.querySelector('#pageProfile .tab-btn.active');
       if (activeBtn) switchTab(currentProfileTab, activeBtn);
-      updateStats();
+      updateChatBadge();
       showToast(newStatus === 'sold' ? 'Markerad som såld' : 'Återaktiverad');
     } catch (e) {
       showToast('Kunde inte uppdatera');
@@ -757,7 +764,7 @@ import { CONFIG, ENV } from './config.js';
       await deleteProductFromSupabase(currentProduct.id);
       await loadProducts();
       renderProducts();
-      updateStats();
+      updateChatBadge();
       showToast('Annons borttagen permanent');
       closeModal('deleteModal');
       if (document.getElementById('pageProfile').classList.contains('active')) {
@@ -893,7 +900,7 @@ import { CONFIG, ENV } from './config.js';
       
       await loadProducts();
       renderProducts();
-      updateStats();
+      updateChatBadge();
       closeModal('sellModal');
       
     } catch (e) {
@@ -930,7 +937,7 @@ import { CONFIG, ENV } from './config.js';
       await updateProductStatus(currentProduct.id, newStatus);
       await loadProducts();
       renderProducts();
-      updateStats();
+      updateChatBadge();
       showToast(newStatus === 'sold' ? 'Markerad som såld' : 'Återaktiverad');
       closeModal('productModal');
     } catch (e) {
@@ -966,33 +973,44 @@ import { CONFIG, ENV } from './config.js';
     }
   }
 
-  async function updateStats() {
-    if (!currentUser) return;
-
-    const myProducts = products.filter(p => String(p.sellerId) === String(currentUser.id) && p.status !== 'deleted');
-    document.getElementById('statAds').textContent = myProducts.length;
-    document.getElementById('statFavs').textContent = localFavorites.size;
-
-    const { count: convCount, error: cErr } = await sb
+ async function updateChatBadge() {
+  if (!currentUser || !sb) return;
+  
+  try {
+    console.log("Uppdaterar badge för:", currentUser.id);
+    
+    const { data: convs, error } = await sb
       .from('conversations')
-      .select('id', { count: 'exact', head: true })
+      .select('buyer_id, seller_id, buyer_unread, seller_unread')
       .or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`);
-
-    if (cErr) {
-      console.error('Kunde inte hämta conv count:', cErr);
-      document.getElementById('statChats').textContent = '0';
-    } else {
-      document.getElementById('statChats').textContent = convCount || 0;
+    
+    if (error) throw error;
+    
+    let totalUnread = 0;
+    
+    for (const conv of (convs || [])) {
+      const isBuyer = String(conv.buyer_id) === String(currentUser.id);
+      const unreadCount = isBuyer ? (conv.buyer_unread || 0) : (conv.seller_unread || 0);
+      totalUnread += unreadCount;
     }
 
+    console.log("Total olästa:", totalUnread);
+
     const badge = document.getElementById('chatBadge');
-    if ((convCount || 0) > 0) {
-      badge.textContent = convCount;
+    const chatBtn = document.getElementById('chatBtn');
+    
+    if (totalUnread > 0) {
+      badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
       badge.classList.remove('hidden');
+      chatBtn.style.position = 'relative';
     } else {
       badge.classList.add('hidden');
     }
+    
+  } catch (e) {
+    console.error("Kunde inte uppdatera badge:", e);
   }
+}
 
   // ==========================================
   // CHAT-FUNKTIONER - KORRIGERADE OCH FÖRBÄTTRADE
@@ -1147,7 +1165,7 @@ import { CONFIG, ENV } from './config.js';
       if (updErr) throw updErr;
 
       await loadConversationsDb();
-      await updateStats();
+      await updateChatBadge();
       showToast('Konversation raderad från din lista');
     } catch (e) {
       console.error(e);
@@ -1156,106 +1174,153 @@ import { CONFIG, ENV } from './config.js';
   }
 
   async function openConversationDb(conversationId) {
-    if (!currentUser) {
-      console.log("Ingen currentUser!");
-      return;
-    }
-
-    if (conversationId == null || conversationId === "null" || conversationId === "undefined") {
-      console.error("openConversationDb: ogiltigt conversationId:", conversationId);
-      showToast("Kunde inte öppna chatten (saknar ID)");
-      return;
-    }
-
-    const convIdNum = Number(conversationId);
-    if (!Number.isFinite(convIdNum)) {
-      console.error('openConversationDb: id ej nummer:', conversationId);
-      showToast('Kunde inte öppna chatten (fel id-format)');
-      return;
-    }
-
-    console.log("Öppnar konversation:", convIdNum);
-
-    try {
-      const { data: conv, error } = await sb
-        .from('conversations')
-        .select('*')
-        .eq('id', convIdNum)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Fel vid hämtning av konversation:", error);
-        throw error;
-      }
-      
-      if (!conv) {
-        console.log("Konversationen finns inte:", convIdNum);
-        showToast('Konversationen finns inte längre');
-        return;
-      }
-
-      console.log("Konversation hämtad:", conv);
-
-      // Kontrollera att användaren inte har tagit bort denna konversation
-      const isBuyer = String(conv.buyer_id) === String(currentUser.id);
-      const isSeller = String(conv.seller_id) === String(currentUser.id);
-      
-      if (isBuyer && conv.buyer_deleted === true) {
-        showToast('Du har tagit bort denna konversation');
-        return;
-      }
-      if (isSeller && conv.seller_deleted === true) {
-        showToast('Du har tagit bort denna konversation');
-        return;
-      }
-
-      // VIKTIGT: Sätt currentChatId som STRING för att matcha DB
-      currentChatId = String(conv.id);
-      console.log("currentChatId satt till:", currentChatId, "typ:", typeof currentChatId);
-      
-      const otherId = isBuyer ? conv.seller_id : conv.buyer_id;
-      const otherName = (await getDisplayName(otherId)) || (isBuyer ? "Säljare" : "Köpare");
-
-      // Visa chat-vyn
-      document.getElementById('chatConversation').classList.remove('hidden');
-      document.getElementById('chatName').textContent = otherName;
-      document.getElementById('chatAvatar').textContent = (otherName || '??').substring(0, 2).toUpperCase();
-
-      // Säkerställ att input är tom och fokuserad
-      const msgInput = document.getElementById('msgInput');
-      if (msgInput) {
-        msgInput.value = '';
-        // Fokusera input efter en kort stund för att UI ska hinna uppdateras
-        setTimeout(() => msgInput.focus(), 100);
-      }
-
-      // Visa produktinfo
-      const prod = products.find(p => String(p.id) === String(conv.product_id));
-      if (prod) {
-        document.getElementById('chatProductImg').src = (prod.images && prod.images[0]) ? prod.images[0] : DEFAULT_IMAGE;
-        document.getElementById('chatProductTitle').textContent = prod.title || '--';
-        document.getElementById('chatProductPrice').textContent = (prod.price != null) ? (prod.price + ' kr') : '';
-        document.getElementById('chatProductInfo').classList.remove('hidden');
-      } else {
-        document.getElementById('chatProductInfo').classList.add('hidden');
-      }
-
-      // Markera aktiv i listan
-      document.querySelectorAll('.chat-conv').forEach(el => el.classList.remove('active'));
-      const activeEl = document.querySelector(`.chat-conv[data-id="${String(conv.id)}"]`);
-      if (activeEl) activeEl.classList.add('active');
-
-      // Ladda meddelanden och prenumerera
-      await loadMessagesDb(String(conv.id));
-      subscribeToMessages(String(conv.id));
-      
-      console.log("Konversation öppnad och klar");
-
-    } catch (e) {
-      console.error("Fel i openConversationDb:", e);
-      showToast('Kunde inte öppna chatten');
-    }
+  if (!currentUser) {
+    console.log("Ingen currentUser!");
+    return;
   }
+
+  if (conversationId == null || conversationId === "null" || conversationId === "undefined") {
+    console.error("openConversationDb: ogiltigt conversationId:", conversationId);
+    showToast("Kunde inte öppna chatten (saknar ID)");
+    return;
+  }
+
+  const convIdNum = Number(conversationId);
+  if (!Number.isFinite(convIdNum)) {
+    console.error('openConversationDb: id ej nummer:', conversationId);
+    showToast('Kunde inte öppna chatten (fel id-format)');
+    return;
+  }
+
+  console.log("Öppnar konversation:", convIdNum);
+
+  try {
+    const { data: conv, error } = await sb
+      .from('conversations')
+      .select('*')
+      .eq('id', convIdNum)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Fel vid hämtning av konversation:", error);
+      throw error;
+    }
+    
+    if (!conv) {
+      console.log("Konversationen finns inte:", convIdNum);
+      showToast('Konversationen finns inte längre');
+      return;
+    }
+
+    console.log("Konversation hämtad:", conv);
+
+    // Kontrollera att användaren inte har tagit bort denna konversation
+    const isBuyer = String(conv.buyer_id) === String(currentUser.id);
+    const isSeller = String(conv.seller_id) === String(currentUser.id);
+    
+    if (isBuyer && conv.buyer_deleted === true) {
+      showToast('Du har tagit bort denna konversation');
+      return;
+    }
+    if (isSeller && conv.seller_deleted === true) {
+      showToast('Du har tagit bort denna konversation');
+      return;
+    }
+
+    // VIKTIGT: Sätt currentChatId som STRING för att matcha DB
+    currentChatId = String(conv.id);
+    console.log("currentChatId satt till:", currentChatId, "typ:", typeof currentChatId);
+    
+    // ⭐ Hämta andra personens ID och namn
+    const otherId = isBuyer ? conv.seller_id : conv.buyer_id;
+    let otherName = await getDisplayName(otherId);
+    if (!otherName) otherName = isBuyer ? "Säljare" : "Köpare";
+
+    // ⭐ Spara chat-info för senare användning
+    currentChat = {
+      id: conv.id,
+      otherId: otherId,
+      otherName: otherName,
+      isBuyer: isBuyer,
+      productId: conv.product_id
+    };
+
+    // Visa chat-vyn
+    document.getElementById('chatConversation').classList.remove('hidden');
+    document.getElementById('chatName').textContent = otherName;
+    document.getElementById('chatAvatar').textContent = (otherName || '??').substring(0, 2).toUpperCase();
+
+    // Säkerställ att input är tom och fokuserad
+    const msgInput = document.getElementById('msgInput');
+    if (msgInput) {
+      msgInput.value = '';
+      setTimeout(() => msgInput.focus(), 100);
+    }
+
+    // Visa produktinfo
+    const prod = products.find(p => String(p.id) === String(conv.product_id));
+    if (prod) {
+      document.getElementById('chatProductImg').src = (prod.images && prod.images[0]) ? prod.images[0] : DEFAULT_IMAGE;
+      document.getElementById('chatProductTitle').textContent = prod.title || '--';
+      document.getElementById('chatProductPrice').textContent = (prod.price != null) ? (prod.price + ' kr') : '';
+      document.getElementById('chatProductInfo').classList.remove('hidden');
+    } else {
+      document.getElementById('chatProductInfo').classList.add('hidden');
+    }
+
+    // Markera aktiv i listan
+    document.querySelectorAll('.chat-conv').forEach(el => el.classList.remove('active'));
+    const activeEl = document.querySelector(`.chat-conv[data-id="${String(conv.id)}"]`);
+    if (activeEl) activeEl.classList.add('active');
+
+    // Ladda meddelanden och prenumerera
+    await loadMessagesDb(String(conv.id));
+    subscribeToMessages(String(conv.id));
+    
+    // ⭐ Markera som läst och nollställ badge
+    await markConversationAsRead(conv.id);
+    
+    console.log("Konversation öppnad och klar");
+
+  } catch (e) {
+    console.error("Fel i openConversationDb:", e);
+    showToast('Kunde inte öppna chatten');
+  }
+}
+
+// funktion för markera meddelande som lästa
+  async function markConversationAsRead(conversationId) {
+  if (!currentUser || !sb) return;
+  
+  try {
+    // Hämta konversationen för att se om vi är buyer eller seller
+    const { data: conv, error: fetchErr } = await sb
+      .from('conversations')
+      .select('buyer_id, seller_id')
+      .eq('id', conversationId)
+      .single();
+    
+    if (fetchErr) throw fetchErr;
+    
+    const isBuyer = String(conv.buyer_id) === String(currentUser.id);
+    
+    // Nollställ rätt unread-fält
+    const updateField = isBuyer ? 'buyer_unread' : 'seller_unread';
+    
+    const { error } = await sb
+      .from('conversations')
+      .update({ [updateField]: 0 })
+      .eq('id', conversationId);
+    
+    if (error) throw error;
+    
+    // Uppdatera badge direkt
+    await updateChatBadge();
+    
+  } catch (e) {
+    console.error("Kunde inte markera som läst:", e);
+  }
+}
 
   async function loadMessagesDb(conversationId) {
     const container = document.getElementById('chatMessages');
@@ -1300,89 +1365,105 @@ import { CONFIG, ENV } from './config.js';
   // ==========================================
   // VIKTIG FUNKTION - sendMessage KORRIGERAD
   // ==========================================
-  async function sendMessage() {
-    const input = document.getElementById('msgInput');
-    
-    if (!input) {
-      console.error("msgInput hittades inte!");
-      showToast('Fel: Chattfältet saknas');
-      return;
-    }
-    
-    const text = input.value.trim();
-    
-    console.log("sendMessage anropad:", {
-      text: text,
-      currentChatId: currentChatId,
-      currentUserId: currentUser?.id,
-      inputValue: input.value
-    });
-
-    // VIKTIGA KONTROLLER
-    if (!text) {
-      console.log("Inget text att skicka");
-      return;
-    }
-    
-    if (!currentChatId) {
-      console.error("currentChatId är null eller undefined!");
-      showToast('Fel: Ingen aktiv konversation');
-      return;
-    }
-    
-    if (!currentUser) {
-      console.error("currentUser är null!");
-      showToast('Fel: Du måste vara inloggad');
-      return;
-    }
-
-    try {
-      console.log("Skickar meddelande till databasen...");
-      
-      // 1) Insert message
-      const { error: msgErr } = await sb
-        .from('messages')
-        .insert([{
-          conversation_id: Number(currentChatId), // Se till att det är ett nummer
-          sender_id: currentUser.id,
-          body: text,
-          created_at: new Date().toISOString()
-        }]);
-
-      if (msgErr) {
-        console.error("Fel vid insert av meddelande:", msgErr);
-        throw msgErr;
-      }
-
-      console.log("Meddelande sparat, uppdaterar konversation...");
-
-      // 2) update conversation
-      const { error: convErr } = await sb
-        .from('conversations')
-        .update({
-          last_message: text,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', Number(currentChatId));
-
-      if (convErr) {
-        console.error("Fel vid uppdatering av konversation:", convErr);
-        throw convErr;
-      }
-
-      input.value = '';
-      console.log("Meddelande skickat framgångsrikt");
-
-      // 3) Uppdatera UI
-      await loadMessagesDb(currentChatId);
-      await loadConversationsDb();
-      await updateStats();
-      
-    } catch (e) {
-      console.error("Fel i sendMessage:", e);
-      showToast('Kunde inte skicka: ' + (e.message || 'okänt fel'));
-    }
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  
+  if (!input) {
+    console.error("msgInput hittades inte!");
+    showToast('Fel: Chattfältet saknas');
+    return;
   }
+  
+  const text = input.value.trim();
+  
+  console.log("sendMessage anropad:", {
+    text: text,
+    currentChatId: currentChatId,
+    currentUserId: currentUser?.id
+  });
+
+  if (!text) {
+    console.log("Inget text att skicka");
+    return;
+  }
+  
+  if (!currentChatId) {
+    console.error("currentChatId är null!");
+    showToast('Fel: Ingen aktiv konversation');
+    return;
+  }
+  
+  if (!currentUser) {
+    console.error("currentUser är null!");
+    showToast('Fel: Du måste vara inloggad');
+    return;
+  }
+
+  try {
+    // 1) Hämta konversation först för att veta vem som är mottagare
+    const { data: conv, error: convFetchErr } = await sb
+      .from('conversations')
+      .select('buyer_id, seller_id, buyer_unread, seller_unread')
+      .eq('id', Number(currentChatId))
+      .single();
+    
+    if (convFetchErr) throw convFetchErr;
+
+    const isBuyer = String(conv.buyer_id) === String(currentUser.id);
+    const receiverField = isBuyer ? 'seller_unread' : 'buyer_unread';
+    
+    // ⭐ Beräkna nytt värde (utan sb.raw!)
+    const currentUnread = conv[receiverField] || 0;
+    const newUnread = currentUnread + 1;
+
+    console.log("Skickar meddelande, mottagarens fält:", receiverField, "nytt värde:", newUnread);
+
+    // 2) Öka unread för mottagaren FÖRST
+    const { error: unreadErr } = await sb
+      .from('conversations')
+      .update({ [receiverField]: newUnread })
+      .eq('id', Number(currentChatId));
+
+    if (unreadErr) throw unreadErr;
+
+    // 3) Insert message
+    const { error: msgErr } = await sb
+      .from('messages')
+      .insert([{
+        conversation_id: Number(currentChatId),
+        sender_id: currentUser.id,
+        body: text,
+        created_at: new Date().toISOString()
+      }]);
+
+    if (msgErr) throw msgErr;
+
+    // 4) Update conversation last_message
+    const { error: convErr } = await sb
+      .from('conversations')
+      .update({
+        last_message: text,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', Number(currentChatId));
+
+    if (convErr) throw convErr;
+
+    input.value = '';
+    console.log("Meddelande skickat!");
+
+    // 5) Uppdatera UI direkt
+    await loadMessagesDb(currentChatId);
+    await loadConversationsDb();
+    await updateChatBadge();
+    
+  } catch (e) {
+    console.error("Fel i sendMessage:", e);
+    showToast('Kunde inte skicka: ' + (e.message || 'okänt fel'));
+  }
+}
+    
+
 
   async function getDisplayName(userId) {
     try {
@@ -1408,31 +1489,53 @@ import { CONFIG, ENV } from './config.js';
   }
 
   function subscribeToMessages(conversationId) {
-    cleanupChatRealtime();
-    try {
-      console.log("Prenumererar på meddelanden för:", conversationId);
-      
-      msgChannel = sb
-        .channel('msgs_' + conversationId)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
-          async (payload) => {
-            console.log("Nytt meddelande mottaget via realtime:", payload);
-            if (currentChatId === conversationId) {
-              await loadMessagesDb(conversationId);
-            }
-            await loadConversationsDb();
-            await updateStats();
-          }
-        )
-        .subscribe((status) => {
-          console.log("Realtime status:", status);
-        });
-    } catch (e) {
-      console.error("Realtime subscribe error:", e);
-    }
+  cleanupChatRealtime();
+  
+  if (!sb) {
+    console.error("Supabase inte initierad");
+    return;
   }
+  
+  try {
+    console.log("Prenumererar på meddelanden för:", conversationId);
+    
+    // ⭐ VIKTIGT: Prenumerera på hela tabellen, inte bara specifik conversation
+    // för att fånga alla ändringar, sedan filtrera i callback
+    msgChannel = sb
+      .channel('messages_changes')
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'messages'
+        },
+        async (payload) => {
+          console.log("Nytt meddelande mottaget:", payload);
+          
+          const msg = payload.new;
+          
+          // Uppdatera badge om meddelandet är till mig och inte från mig
+          if (String(msg.conversation_id) === String(currentChatId)) {
+            // Om detta är den aktiva konversationen, ladda om meddelanden
+            if (currentChatId && String(msg.conversation_id) === String(currentChatId)) {
+              await loadMessagesDb(currentChatId);
+            }
+          }
+          
+          // ⭐ ALLTID uppdatera konversationslistan och badge
+          await loadConversationsDb();
+          await updateChatBadge();
+        }
+      )
+      .subscribe((status) => {
+        console.log("Realtime status:", status);
+      });
+      
+  } catch (e) {
+    console.error("Realtime subscribe error:", e);
+  }
+}
 
   function backToChatList() {
     console.log("Går tillbaka till chat-lista");
@@ -1477,7 +1580,7 @@ import { CONFIG, ENV } from './config.js';
       currentChatId = null;
 
       await loadConversationsDb();
-      await updateStats();
+      await updateChatBadge();
       showToast('Konversation raderad från din lista');
     } catch (e) {
       console.error(e);
@@ -1795,6 +1898,31 @@ async function contactSeller() {
     if (!text) return '';
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
+
+
+  // markera meddelanden som lästa
+  async function markMessagesAsRead(conversationId) {
+  if (!currentUser || !sb) return;
+  
+  try {
+    // Uppdatera unread_count för denna konversation
+    const { error } = await sb
+      .from('conversations')
+      .update({ 
+        unread_count: 0,
+        [currentUser.id === conversationId.buyer_id ? 'buyer_unread' : 'seller_unread']: 0
+      })
+      .eq('id', conversationId);
+    
+    if (error) throw error;
+    
+    // Uppdatera badge
+    updateChatBadge();
+    
+  } catch (e) {
+    console.error("Kunde inte markera som läst:", e);
+  }
+}
 
   // Exponera funktioner globalt för HTML onclick-attribut
 window.showHome = showHome;
