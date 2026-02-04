@@ -2215,3 +2215,4 @@ window.prevImage = prevImage;
 window.selectImage = selectImage;
 window.cardNextImage = cardNextImage;
 window.cardPrevImage = cardPrevImage;
+/*något saknas */

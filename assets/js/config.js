@@ -20,3 +20,5 @@ const CONFIG = {
 };
 
 export { SUPABASE_URL, SUPABASE_ANON_KEY, ENV, CONFIG };
+
+/*något saknas */
