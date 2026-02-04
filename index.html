@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="sv">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,409 +8,440 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
+
 <body>
 
-<nav>
-  <div class="container nav">
-    <div class="brand" onclick="showHome()">
-      <div class="logo">👶</div>
-      <span>Miniblocket</span>
-    </div>
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <button class="btn btn-soft" id="authBtn" onclick="openAuth()">Logga in</button>
-      <button class="btn btn-primary hidden" id="sellBtn" onclick="openSellModal()">+ Sälj</button>
-      <button class="btn btn-soft hidden" id="chatBtn" onclick="openChat()" style="position: relative;">
-        💬
-        <span id="chatBadge" class="hidden" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 800;">0</span>
-      </button>
-      <div class="avatar hidden" id="userAvatar" onclick="toggleMenu(event)">??</div>
-    </div>
-  </div>
-</nav>
-
-<div id="userMenu" class="menu-dropdown hidden">
-  <div class="menu-item" onclick="showProfile()">👤 Min profil</div>
-  <div class="menu-item hidden" id="adminMenuItem" onclick="showAdmin()">⚙️ Admin panel</div>
-  <div class="menu-divider"></div>
-  <div class="menu-item" onclick="logout()" style="color: var(--danger);">🚪 Logga ut</div>
-</div>
-
-<!-- Pages -->
-<div id="pageHome" class="page active">
-  <div class="container">
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Sök annonser..." onkeyup="renderProducts()">
-      <select id="filterLoc" onchange="renderProducts()">
-        <option value="">Alla platser</option>
-        <option>Stockholm</option>
-        <option>Göteborg</option>
-        <option>Malmö</option>
-        <option>Uppsala</option>
-      </select>
-    </div>
-    
-    <div class="cats">
-      <button class="cat active" onclick="setCat('all', this)">Allt</button>
-      <button class="cat" onclick="setCat('leksaker', this)">🧸 Leksaker</button>
-      <button class="cat" onclick="setCat('barnvagn', this)">🍼 Barnvagnar</button>
-      <button class="cat" onclick="setCat('bilbarnstol', this)">🚗 Bilbarnstolar</button>
-      <button class="cat" onclick="setCat('kläder', this)">👕 Kläder</button>
-      <button class="cat" onclick="setCat('möbler', this)">🛏️ Möbler</button>
-    </div>
-
-    <div id="productsGrid" class="grid"></div>
-    <div id="noResults" class="hidden" style="text-align: center; padding: 60px; color: #64748b;">
-      <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
-      <div style="font-weight: 700; font-size: 18px;">Inga annonser hittades</div>
-    </div>
-  </div>
-</div>
-
-<div id="pageProfile" class="page">
-  <div class="container">
-    <button class="btn btn-soft" onclick="showHome()" style="margin-bottom: 20px;">← Tillbaka</button>
-    
-    <div class="profile-grid">
-      <div class="panel">
-        <div class="panel-header" style="height: 100px; position: relative;">
-          <div style="position: absolute; bottom: -40px; left: 20px;">
-            <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #ec4899); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 800; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" id="pAvatar">??</div>
-          </div>
-        </div>
-        <div class="panel-body" style="padding-top: 50px;">
-          <div style="font-weight: 800; font-size: 20px;" id="pName">--</div>
-          <div style="color: #64748b; margin-bottom: 20px;" id="pEmail">--</div>
-          
-          <div class="stat-grid">
-            <div class="stat-box">
-              <div class="stat-num" id="statAds">0</div>
-              <div class="stat-label">Annonser</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-num" id="statChats">0</div>
-              <div class="stat-label">Chattar</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-num" id="statFavs">0</div>
-              <div class="stat-label">Favoriter</div>
-            </div>
-          </div>
-          
-          <button class="btn btn-primary" style="width: 100%;" onclick="openSellModal()">+ Ny annons</button>
-        </div>
+  <nav>
+    <div class="container nav">
+      <div class="brand" onclick="showHome()">
+        <div class="logo">👶</div>
+        <span>Miniblocket</span>
       </div>
-      
-      <div>
-        <div class="tab-bar">
-          <button class="tab-btn active" onclick="switchTab('active', this)">Aktiva</button>
-          <button class="tab-btn" onclick="switchTab('history', this)">Historik</button>
-          <button class="tab-btn" onclick="switchTab('favorites', this)">Favoriter</button>
-        </div>
-        
-        <div id="tabContent"></div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="btn btn-soft" id="authBtn" onclick="openAuth()">Logga in</button>
+        <button class="btn btn-primary hidden" id="sellBtn" onclick="openSellModal()">+ Sälj</button>
+        <button class="btn btn-soft hidden" id="chatBtn" onclick="openChat()" style="position: relative;">
+          💬
+          <span id="chatBadge" class="hidden"
+            style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 800;">0</span>
+        </button>
+        <div class="avatar hidden" id="userAvatar" onclick="toggleMenu(event)">??</div>
       </div>
     </div>
-  </div>
-</div>
+  </nav>
 
-<div id="pageAdmin" class="page">
-  <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-      <button class="btn btn-soft" onclick="showHome()">← Tillbaka</button>
-      <h2>Administration <span style="background: var(--danger); color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px;">ADMIN</span></h2>
-    </div>
-    
-    <div class="profile-grid">
-      <div class="panel">
-        <div class="panel-body">
-          <div class="admin-nav">
-            <div class="admin-nav-item active" onclick="setAdminTab('overview', this)">
-              <span>📊 Översikt</span>
-            </div>
-            <div class="admin-nav-item" onclick="setAdminTab('pending', this)">
-              <span>⏳ Granskning</span>
-              <span class="count-badge hidden" id="badgePending">0</span>
-            </div>
-            <div class="admin-nav-item" onclick="setAdminTab('reports', this)">
-              <span>🚨 Anmälningar</span>
-              <span class="count-badge hidden" id="badgeReports">0</span>
-            </div>
-            <div class="admin-nav-item" onclick="setAdminTab('users', this)">
-              <span>👥 Användare</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div id="adminContent">
-        <!-- Dynamic content loaded here -->
-      </div>
-    </div>
+  <div id="userMenu" class="menu-dropdown hidden">
+    <div class="menu-item" onclick="showProfile()">👤 Min profil</div>
+    <div class="menu-item hidden" id="adminMenuItem" onclick="showAdmin()">⚙️ Admin panel</div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" onclick="logout()" style="color: var(--danger);">🚪 Logga ut</div>
   </div>
-</div>
 
-<!-- Modals -->
-<div id="authModal" class="modal" onclick="if(event.target === this) closeModal('authModal')">
-  <div class="modal-box" style="max-width: 400px;">
-    <div class="modal-head">
-      <h3 id="authTitle">Logga in</h3>
-      <button class="close-btn" onclick="closeModal('authModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <form onsubmit="event.preventDefault(); handleAuth();">
-        <div id="authNameField" class="hidden">
-          <label style="font-weight: 600; display: block; margin-bottom: 6px;">Namn</label>
-          <input type="text" id="authName" placeholder="Ditt namn">
-        </div>
-        
-        <label style="font-weight: 600; display: block; margin-bottom: 6px; margin-top: 12px;">E-post</label>
-        <input type="email" id="authEmail" placeholder="namn@exempel.se" required>
-        
-        <label style="font-weight: 600; display: block; margin-bottom: 6px; margin-top: 12px;">Lösenord</label>
-        <input type="password" id="authPass" placeholder="Minst 6 tecken" required minlength="6">
-        
-        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-          <button type="submit" class="btn btn-primary" id="authActionBtn" style="width: 100%;">Logga in</button>
-          <button type="button" class="btn btn-soft" onclick="toggleAuthMode()" style="width: 100%;" id="authToggleBtn">Skapa konto istället</button>
-          <div id="forgotPasswordLink" class="hidden" style="text-align: center; margin-top: 10px;">
-  <a href="#" onclick="forgotPassword()" style="color: var(--primary); font-size: 14px;">Glömt lösenord?</a>
-</div>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<div id="forgotPasswordModal" class="modal" onclick="if(event.target === this) closeModal('forgotPasswordModal')">
-  <div class="modal-box" style="max-width: 400px;">
-    <div class="modal-head">
-      <h3>Återställ lösenord</h3>
-      <button class="close-btn" onclick="closeModal('forgotPasswordModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <form onsubmit="event.preventDefault(); submitForgotPassword();">
-        <label style="font-weight: 600;">Ange din e-postadress</label>
-        <input type="email" id="forgotEmail" placeholder="namn@exempel.se" required>
-        
-        <div style="margin-top: 20px; display: flex; gap: 10px;">
-          <button type="button" class="btn btn-soft" style="flex: 1;" onclick="closeModal('forgotPasswordModal')">Avbryt</button>
-          <button type="submit" class="btn btn-primary" style="flex: 1;">Skicka länk</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<div id="sellModal" class="modal" onclick="if(event.target === this) closeModal('sellModal')">
-  <div class="modal-box" style="max-width: 600px;">
-    <div class="modal-head">
-      <h3 id="sellTitle">Ny annons</h3>
-      <button class="close-btn" onclick="closeModal('sellModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <form onsubmit="event.preventDefault(); submitProduct();">
-        <input type="hidden" id="editId">
-        
-        <label style="font-weight: 600;">Titel *</label>
-        <input type="text" id="sellTitleInput" placeholder="Vad säljer du?" required>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div>
-            <label style="font-weight: 600;">Pris (kr) *</label>
-            <input type="number" id="sellPrice" placeholder="0" required min="0">
-          </div>
-          <div>
-            <label style="font-weight: 600;">Kategori</label>
-            <select id="sellCat">
-              <option value="leksaker">Leksaker</option>
-              <option value="barnvagn">Barnvagn</option>
-              <option value="bilbarnstol">Bilbarnstol</option>
-              <option value="kläder">Kläder</option>
-              <option value="möbler">Möbler</option>
-            </select>
-          </div>
-        </div>
-        
-        <label style="font-weight: 600; display: block; margin-top: 12px;">Plats</label>
-        <select id="sellLoc">
+  <!-- Pages -->
+  <div id="pageHome" class="page active">
+    <div class="container">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Sök annonser..." onkeyup="renderProducts()">
+        <select id="filterLoc" onchange="renderProducts()">
+          <option value="">Alla platser</option>
           <option>Stockholm</option>
           <option>Göteborg</option>
           <option>Malmö</option>
           <option>Uppsala</option>
         </select>
-        
-        <label style="font-weight: 600; display: block; margin-top: 12px;">Beskrivning</label>
-        <textarea id="sellDesc" rows="3" placeholder="Beskriv varan..."></textarea>
-        
-        <label style="font-weight: 600; display: block; margin-top: 12px;">Bilder (max 6)</label>
-        <div class="file-input-wrapper">
-          <label class="file-input-label">
-            📷 Klicka för att välja bilder från dator eller mobil
-            <input type="file" id="sellImages" multiple accept="image/*" onchange="previewImages(this)" style="display: none;">
-          </label>
-        </div>
-        <div id="imagePreviewGrid" class="img-grid"></div>
-        <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Välj upp till 6 bilder. Första bilden blir huvudbilden.</div>
-        
-        <div id="pendingNotice" class="hidden" style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 12px 0; color: #92400e; font-size: 14px;">
-          ⏳ Din annons kommer granskas av admin innan den publiceras.
-        </div>
-        
-        <div style="display: flex; gap: 12px; margin-top: 20px;">
-          <button type="button" class="btn btn-soft" style="flex: 1;" onclick="closeModal('sellModal')">Avbryt</button>
-          <button type="submit" class="btn btn-primary" style="flex: 1;">Publicera</button>
-        </div>
-      </form>
+      </div>
+
+      <div class="cats">
+        <button class="cat active" onclick="setCat('all', this)">Allt</button>
+        <button class="cat" onclick="setCat('leksaker', this)">🧸 Leksaker</button>
+        <button class="cat" onclick="setCat('barnvagn', this)">🍼 Barnvagnar</button>
+        <button class="cat" onclick="setCat('bilbarnstol', this)">🚗 Bilbarnstolar</button>
+        <button class="cat" onclick="setCat('kläder', this)">👕 Kläder</button>
+        <button class="cat" onclick="setCat('möbler', this)">🛏️ Möbler</button>
+      </div>
+
+      <div id="productsGrid" class="grid"></div>
+      <div id="noResults" class="hidden" style="text-align: center; padding: 60px; color: #64748b;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+        <div style="font-weight: 700; font-size: 18px;">Inga annonser hittades</div>
+      </div>
     </div>
   </div>
-</div>
 
-<div id="productModal" class="modal" onclick="if(event.target === this) closeModal('productModal')">
-  <div class="modal-box">
-    <div class="modal-head">
-      <h3>Annonsdetaljer</h3>
-      <button class="close-btn" onclick="closeModal('productModal')">✕</button>
-    </div>
-    <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-      <div>
-        <img id="modalImg" style="width: 100%; height: 320px; object-fit: cover; border-radius: 12px; background: #f1f5f9;">
-        <div id="modalThumbs" style="display: flex; gap: 8px; margin-top: 12px; overflow-x: auto;"></div>
-      </div>
-      <div>
-        <div id="modalStatus"></div>
-        <h2 id="modalTitle" style="font-size: 24px; font-weight: 800; margin: 8px 0;">--</h2>
-        <div id="modalPrice" style="font-size: 28px; font-weight: 800; color: var(--primary);">--</div>
-        <div id="modalMeta" style="color: #64748b; margin: 12px 0;">--</div>
-        
-        <div style="display: flex; gap: 12px; margin: 20px 0;">
-          <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #0ea5e9); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;" id="modalSellerAvatar">??</div>
-          <div>
-            <div id="modalSellerName" style="font-weight: 700;">--</div>
-            <div style="font-size: 14px; color: #64748b;">Säljare</div>
+  <div id="pageProfile" class="page">
+    <div class="container">
+      <button class="btn btn-soft" onclick="showHome()" style="margin-bottom: 20px;">← Tillbaka</button>
+
+      <div class="profile-grid">
+        <div class="panel">
+          <div class="panel-header" style="height: 100px; position: relative;">
+            <div style="position: absolute; bottom: -40px; left: 20px;">
+              <div
+                style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #ec4899); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 800; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"
+                id="pAvatar">??</div>
+            </div>
+          </div>
+          <div class="panel-body" style="padding-top: 50px;">
+            <div style="font-weight: 800; font-size: 20px;" id="pName">--</div>
+            <div style="color: #64748b; margin-bottom: 20px;" id="pEmail">--</div>
+
+            <div class="stat-grid">
+              <div class="stat-box">
+                <div class="stat-num" id="statAds">0</div>
+                <div class="stat-label">Annonser</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-num" id="statChats">0</div>
+                <div class="stat-label">Chattar</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-num" id="statFavs">0</div>
+                <div class="stat-label">Favoriter</div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%;" onclick="openSellModal()">+ Ny annons</button>
           </div>
         </div>
-        
-        <p id="modalDesc" style="color: #64748b; line-height: 1.6; margin-bottom: 20px;">--</p>
-        
-        <div id="modalActions" style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button class="btn btn-primary" id="btnContact" onclick="contactSeller()">💬 Kontakta</button>
-          <button class="btn btn-soft" id="modalFavBtn" onclick="toggleFavoriteFromModal()">🤍 Favorit</button>
-          <button class="btn btn-warning" onclick="openReport()">🚨 Anmäl</button>
-        </div>
-        
-        <div id="ownerActions" class="hidden" style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
-          <div style="font-weight: 600; margin-bottom: 10px; color: #64748b;">Hantera din annons:</div>
-          <button class="btn btn-soft" onclick="editProduct()">✏️ Redigera</button>
-          <button class="btn btn-success" id="btnSold" onclick="markSold()">✓ Markera såld</button>
-          <button class="btn btn-danger" onclick="deleteProduct()">🗑️ Ta bort annons permanent</button>
+
+        <div>
+          <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('active', this)">Aktiva</button>
+            <button class="tab-btn" onclick="switchTab('history', this)">Historik</button>
+            <button class="tab-btn" onclick="switchTab('favorites', this)">Favoriter</button>
+          </div>
+
+          <div id="tabContent"></div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<div id="reportModal" class="modal" onclick="if(event.target === this) closeModal('reportModal')">
-  <div class="modal-box" style="max-width: 400px;">
-    <div class="modal-head" style="background: #fef3c7;">
-      <h3>🚨 Anmäl</h3>
-      <button class="close-btn" onclick="closeModal('reportModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <form onsubmit="event.preventDefault(); submitReport();">
-        <label style="font-weight: 600;">Anledning</label>
-        <select id="reportReason" style="margin-bottom: 12px;">
-          <option value="Bedrägeri">Bedrägeri</option>
-          <option value="Olämpligt innehåll">Olämpligt innehåll</option>
-          <option value="Spam">Spam</option>
-          <option value="Fejk">Fejk/felaktig</option>
-          <option value="Annat">Annat</option>
-        </select>
-        
-        <label style="font-weight: 600;">Detaljer (valfritt)</label>
-        <textarea id="reportDetails" rows="3" placeholder="Beskriv problemet..."></textarea>
-        
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-          <button type="button" class="btn btn-soft" style="flex: 1;" onclick="closeModal('reportModal')">Avbryt</button>
-          <button type="submit" class="btn btn-danger" style="flex: 1;">Skicka</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<div id="deleteModal" class="modal" onclick="if(event.target === this) closeModal('deleteModal')">
-  <div class="modal-box" style="max-width: 400px;">
-    <div class="modal-head" style="background: #fee2e2;">
-      <h3>🗑️ Ta bort annons permanent?</h3>
-      <button class="close-btn" onclick="closeModal('deleteModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <form onsubmit="event.preventDefault(); confirmDelete();">
-        <p style="margin-bottom: 16px;">Varför tas annonsen bort?</p>
-        <select id="deleteReason" style="margin-bottom: 20px;">
-          <option value="Varan är såld">Varan är såld</option>
-          <option value="Ångrar försäljning">Ångrar försäljning</option>
-          <option value="Ville inte sälja">Ville inte sälja</option>
-          <option value="Annat">Annat</option>
-        </select>
-        
-        <div style="display: flex; gap: 10px;">
-          <button type="button" class="btn btn-soft" style="flex: 1;" onclick="closeModal('deleteModal')">Avbryt</button>
-          <button type="submit" class="btn btn-danger" style="flex: 1;">Ta bort permanent</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Chat -->
-<div id="chatOverlay" class="chat-overlay"></div>
-<div id="chatPanel" class="chat-panel">
-  <div style="display: flex; height: 100%;">
-    <div style="width: 100%; display: flex; flex-direction: column;">
-      <div class="chat-header">
-        <h3 style="margin: 0;">💬 Meddelanden</h3>
-        <button class="close-btn" onclick="closeChat()">✕</button>
+  <div id="pageAdmin" class="page">
+    <div class="container">
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <button class="btn btn-soft" onclick="showHome()">← Tillbaka</button>
+        <h2>Administration <span
+            style="background: var(--danger); color: white; padding: 4px 12px; border-radius: 12px; font-size: 14px;">ADMIN</span>
+        </h2>
       </div>
-      <div id="chatList" class="chat-list"></div>
-    </div>
-    <div id="chatConversation" class="chat-main hidden" style="position: absolute; inset: 0; background: white; z-index: 10;">
-      <div class="chat-header">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div id="chatAvatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #ec4899); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">??</div>
-          <div>
-            <div id="chatName" style="font-weight: 700;">--</div>
-            <div style="font-size: 12px; color: var(--success);">● Online</div>
+
+      <div class="profile-grid">
+        <div class="panel">
+          <div class="panel-body">
+            <div class="admin-nav">
+              <div class="admin-nav-item active" onclick="setAdminTab('overview', this)">
+                <span>📊 Översikt</span>
+              </div>
+              <div class="admin-nav-item" onclick="setAdminTab('pending', this)">
+                <span>⏳ Granskning</span>
+                <span class="count-badge hidden" id="badgePending">0</span>
+              </div>
+              <div class="admin-nav-item" onclick="setAdminTab('reports', this)">
+                <span>🚨 Anmälningar</span>
+                <span class="count-badge hidden" id="badgeReports">0</span>
+              </div>
+              <div class="admin-nav-item" onclick="setAdminTab('users', this)">
+                <span>👥 Användare</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button onclick="reportFromChat()" style="background: none; border: none; cursor: pointer; font-size: 20px;" title="Anmäl">🚨</button>
-          <button onclick="deleteCurrentChat()" style="background: none; border: none; cursor: pointer; font-size: 20px;" title="Radera">🗑️</button>
-          <button class="close-btn" onclick="backToChatList()">←</button>
+
+        <div id="adminContent">
+          <!-- Dynamic content loaded here -->
         </div>
-      </div>
-      
-      <div id="chatProductInfo" class="chat-product-info hidden" onclick="openProductFromChat()">
-        <img id="chatProductImg" class="chat-product-img" src="" alt="">
-        <div class="chat-product-details">
-          <div class="chat-product-label">Gäller annonsen:</div>
-          <div id="chatProductTitle" class="chat-product-title">--</div>
-          <div id="chatProductPrice" class="chat-product-price">--</div>
-        </div>
-        <div style="color: var(--primary); font-size: 20px;">›</div>
-      </div>
-      
-      <div id="chatMessages" class="chat-messages"></div>
-      <div class="chat-input">
-        <input type="text" id="msgInput" placeholder="Skriv ett meddelande..." onkeypress="if(event.key === 'Enter') sendMessage()">
-        <button class="send-btn" onclick="sendMessage()">➤</button>
       </div>
     </div>
   </div>
-</div>
 
-<div id="toast" class="toast"></div>
+  <!-- Modals -->
+  <div id="authModal" class="modal" onclick="if(event.target === this) closeModal('authModal')">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-head">
+        <h3 id="authTitle">Logga in</h3>
+        <button class="close-btn" onclick="closeModal('authModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="event.preventDefault(); handleAuth();">
+          <div id="authNameField" class="hidden">
+            <label style="font-weight: 600; display: block; margin-bottom: 6px;">Namn</label>
+            <input type="text" id="authName" placeholder="Ditt namn">
+          </div>
 
-<script type="module" src="assets/js/app.js"></script>
+          <label style="font-weight: 600; display: block; margin-bottom: 6px; margin-top: 12px;">E-post</label>
+          <input type="email" id="authEmail" placeholder="namn@exempel.se" required>
+
+          <label style="font-weight: 600; display: block; margin-bottom: 6px; margin-top: 12px;">Lösenord</label>
+          <input type="password" id="authPass" placeholder="Minst 6 tecken" required minlength="6">
+
+          <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <button type="submit" class="btn btn-primary" id="authActionBtn" style="width: 100%;">Logga in</button>
+            <button type="button" class="btn btn-soft" onclick="toggleAuthMode()" style="width: 100%;"
+              id="authToggleBtn">Skapa konto istället</button>
+            <div id="forgotPasswordLink" class="hidden" style="text-align: center; margin-top: 10px;">
+              <a href="#" onclick="forgotPassword()" style="color: var(--primary); font-size: 14px;">Glömt lösenord?</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="forgotPasswordModal" class="modal" onclick="if(event.target === this) closeModal('forgotPasswordModal')">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-head">
+        <h3>Återställ lösenord</h3>
+        <button class="close-btn" onclick="closeModal('forgotPasswordModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="event.preventDefault(); submitForgotPassword();">
+          <label style="font-weight: 600;">Ange din e-postadress</label>
+          <input type="email" id="forgotEmail" placeholder="namn@exempel.se" required>
+
+          <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <button type="button" class="btn btn-soft" style="flex: 1;"
+              onclick="closeModal('forgotPasswordModal')">Avbryt</button>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Skicka länk</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="sellModal" class="modal" onclick="if(event.target === this) closeModal('sellModal')">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-head">
+        <h3 id="sellTitle">Ny annons</h3>
+        <button class="close-btn" onclick="closeModal('sellModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="event.preventDefault(); submitProduct();">
+          <input type="hidden" id="editId">
+
+          <label style="font-weight: 600;">Titel *</label>
+          <input type="text" id="sellTitleInput" placeholder="Vad säljer du?" required>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="font-weight: 600;">Pris (kr) *</label>
+              <input type="number" id="sellPrice" placeholder="0" required min="0">
+            </div>
+            <div>
+              <label style="font-weight: 600;">Kategori</label>
+              <select id="sellCat">
+                <option value="leksaker">Leksaker</option>
+                <option value="barnvagn">Barnvagn</option>
+                <option value="bilbarnstol">Bilbarnstol</option>
+                <option value="kläder">Kläder</option>
+                <option value="möbler">Möbler</option>
+              </select>
+            </div>
+          </div>
+
+          <label style="font-weight: 600; display: block; margin-top: 12px;">Plats</label>
+          <select id="sellLoc">
+            <option>Stockholm</option>
+            <option>Göteborg</option>
+            <option>Malmö</option>
+            <option>Uppsala</option>
+          </select>
+
+          <label style="font-weight: 600; display: block; margin-top: 12px;">Beskrivning</label>
+          <textarea id="sellDesc" rows="3" placeholder="Beskriv varan..."></textarea>
+
+          <label style="font-weight: 600; display: block; margin-top: 12px;">Bilder (max 6)</label>
+          <div class="file-input-wrapper">
+            <label class="file-input-label">
+              📷 Klicka för att välja bilder från dator eller mobil
+              <input type="file" id="sellImages" multiple accept="image/*" onchange="previewImages(this)"
+                style="display: none;">
+            </label>
+          </div>
+          <div id="imagePreviewGrid" class="img-grid"></div>
+          <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Välj upp till 6 bilder. Första bilden blir
+            huvudbilden.</div>
+
+          <div id="pendingNotice" class="hidden"
+            style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 12px 0; color: #92400e; font-size: 14px;">
+            ⏳ Din annons kommer granskas av admin innan den publiceras.
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button type="button" class="btn btn-soft" style="flex: 1;"
+              onclick="closeModal('sellModal')">Avbryt</button>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Publicera</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="productModal" class="modal" onclick="if(event.target === this) closeModal('productModal')">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>Annonsdetaljer</h3>
+        <button class="close-btn" onclick="closeModal('productModal')">✕</button>
+      </div>
+      <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div>
+          <div class="modal-image-wrapper">
+            <button id="prevImgBtn" class="img-nav left" onclick="prevImage()">‹</button>
+
+            <img id="modalImg">
+
+            <button id="nextImgBtn" class="img-nav right" onclick="nextImage()">›</button>
+          </div>
+          <div id="modalThumbs" style="display: flex; gap: 8px; margin-top: 12px; overflow-x: auto;"></div>
+        </div>
+        <div>
+          <div id="modalStatus"></div>
+          <h2 id="modalTitle" style="font-size: 24px; font-weight: 800; margin: 8px 0;">--</h2>
+          <div id="modalPrice" style="font-size: 28px; font-weight: 800; color: var(--primary);">--</div>
+          <div id="modalMeta" style="color: #64748b; margin: 12px 0;">--</div>
+
+          <div style="display: flex; gap: 12px; margin: 20px 0;">
+            <div
+              style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #0ea5e9); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;"
+              id="modalSellerAvatar">??</div>
+            <div>
+              <div id="modalSellerName" style="font-weight: 700;">--</div>
+              <div style="font-size: 14px; color: #64748b;">Säljare</div>
+            </div>
+          </div>
+
+          <p id="modalDesc" style="color: #64748b; line-height: 1.6; margin-bottom: 20px;">--</p>
+
+          <div id="modalActions" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="btnContact" onclick="contactSeller()">💬 Kontakta</button>
+            <button class="btn btn-soft" id="modalFavBtn" onclick="toggleFavoriteFromModal()">🤍 Favorit</button>
+            <button class="btn btn-warning" onclick="openReport()">🚨 Anmäl</button>
+          </div>
+
+          <div id="ownerActions" class="hidden"
+            style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
+            <div style="font-weight: 600; margin-bottom: 10px; color: #64748b;">Hantera din annons:</div>
+            <button class="btn btn-soft" onclick="editProduct()">✏️ Redigera</button>
+            <button class="btn btn-success" id="btnSold" onclick="markSold()">✓ Markera såld</button>
+            <button class="btn btn-danger" onclick="deleteProduct()">🗑️ Ta bort annons permanent</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="reportModal" class="modal" onclick="if(event.target === this) closeModal('reportModal')">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-head" style="background: #fef3c7;">
+        <h3>🚨 Anmäl</h3>
+        <button class="close-btn" onclick="closeModal('reportModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="event.preventDefault(); submitReport();">
+          <label style="font-weight: 600;">Anledning</label>
+          <select id="reportReason" style="margin-bottom: 12px;">
+            <option value="Bedrägeri">Bedrägeri</option>
+            <option value="Olämpligt innehåll">Olämpligt innehåll</option>
+            <option value="Spam">Spam</option>
+            <option value="Fejk">Fejk/felaktig</option>
+            <option value="Annat">Annat</option>
+          </select>
+
+          <label style="font-weight: 600;">Detaljer (valfritt)</label>
+          <textarea id="reportDetails" rows="3" placeholder="Beskriv problemet..."></textarea>
+
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="button" class="btn btn-soft" style="flex: 1;"
+              onclick="closeModal('reportModal')">Avbryt</button>
+            <button type="submit" class="btn btn-danger" style="flex: 1;">Skicka</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteModal" class="modal" onclick="if(event.target === this) closeModal('deleteModal')">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-head" style="background: #fee2e2;">
+        <h3>🗑️ Ta bort annons permanent?</h3>
+        <button class="close-btn" onclick="closeModal('deleteModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="event.preventDefault(); confirmDelete();">
+          <p style="margin-bottom: 16px;">Varför tas annonsen bort?</p>
+          <select id="deleteReason" style="margin-bottom: 20px;">
+            <option value="Varan är såld">Varan är såld</option>
+            <option value="Ångrar försäljning">Ångrar försäljning</option>
+            <option value="Ville inte sälja">Ville inte sälja</option>
+            <option value="Annat">Annat</option>
+          </select>
+
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-soft" style="flex: 1;"
+              onclick="closeModal('deleteModal')">Avbryt</button>
+            <button type="submit" class="btn btn-danger" style="flex: 1;">Ta bort permanent</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div id="chatOverlay" class="chat-overlay"></div>
+  <div id="chatPanel" class="chat-panel">
+    <div style="display: flex; height: 100%;">
+      <div style="width: 100%; display: flex; flex-direction: column;">
+        <div class="chat-header">
+          <h3 style="margin: 0;">💬 Meddelanden</h3>
+          <button class="close-btn" onclick="closeChat()">✕</button>
+        </div>
+        <div id="chatList" class="chat-list"></div>
+      </div>
+      <div id="chatConversation" class="chat-main hidden"
+        style="position: absolute; inset: 0; background: white; z-index: 10;">
+        <div class="chat-header">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="chatAvatar"
+              style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #ec4899); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+              ??</div>
+            <div>
+              <div id="chatName" style="font-weight: 700;">--</div>
+              <div style="font-size: 12px; color: var(--success);">● Online</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="reportFromChat()" style="background: none; border: none; cursor: pointer; font-size: 20px;"
+              title="Anmäl">🚨</button>
+            <button onclick="deleteCurrentChat()"
+              style="background: none; border: none; cursor: pointer; font-size: 20px;" title="Radera">🗑️</button>
+            <button class="close-btn" onclick="backToChatList()">←</button>
+          </div>
+        </div>
+
+        <div id="chatProductInfo" class="chat-product-info hidden" onclick="openProductFromChat()">
+          <img id="chatProductImg" class="chat-product-img" src="" alt="">
+          <div class="chat-product-details">
+            <div class="chat-product-label">Gäller annonsen:</div>
+            <div id="chatProductTitle" class="chat-product-title">--</div>
+            <div id="chatProductPrice" class="chat-product-price">--</div>
+          </div>
+          <div style="color: var(--primary); font-size: 20px;">›</div>
+        </div>
+
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input">
+          <input type="text" id="msgInput" placeholder="Skriv ett meddelande..."
+            onkeypress="if(event.key === 'Enter') sendMessage()">
+          <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="assets/js/app.js"></script>
 </body>
+
 </html>

@@ -12,6 +12,11 @@ import { CONFIG, ENV } from './config.js';
   let reports = [];
   let currentProfileTab = 'active';
   let localFavorites = new Set();
+
+  //bläddra bilder annons bilder
+  let currentImageIndex = 0;
+// annons ej öppen funktion
+  const cardImageIndex = {};
   
   const DEFAULT_IMAGE = "https://placehold.co/600x400?text=Ingen+bild";
 
@@ -76,6 +81,16 @@ import { CONFIG, ENV } from './config.js';
             }
           }
         }
+
+     const modal = document.getElementById('productModal');
+if (modal && modal.classList.contains('show')) {
+  // undvik att trigga om man skriver i input/textarea
+  const tag = (document.activeElement?.tagName || '').toLowerCase();
+  if (tag !== 'input' && tag !== 'textarea') {
+    if (e.key === 'ArrowRight') nextImage();
+    if (e.key === 'ArrowLeft') prevImage();
+  }
+}
         
         // Lägg till Enter för att skicka meddelande (Ctrl+Enter för ny rad)
         if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
@@ -528,6 +543,7 @@ import { CONFIG, ENV } from './config.js';
   }
 
   async function renderProducts() {
+   // ny funktion
     const grid = document.getElementById('productsGrid');
     const search = (document.getElementById('searchInput').value || '').toLowerCase();
     const loc = document.getElementById('filterLoc').value;
@@ -555,21 +571,52 @@ import { CONFIG, ENV } from './config.js';
     document.getElementById('noResults').classList.add('hidden');
 
     const favIds = Array.from(localFavorites);
+    
+for (const p of list) {
+  if (cardImageIndex[p.id] == null) cardImageIndex[p.id] = 0;
+  const max = (p.images?.length || 1) - 1;
+  if (cardImageIndex[p.id] > max) cardImageIndex[p.id] = 0;
+}
 
     grid.innerHTML = list.map(p => {
       const isFav = favIds.includes(String(p.id));
-      const imgUrl = (p.images && p.images.length) ? p.images[0] : DEFAULT_IMAGE;
-      return `
-        <div class="card ${p.status === 'sold' ? 'sold' : ''}" onclick="openProduct('${p.id}')">
-          <div style="position: relative;"><img src="${imgUrl}" class="card-img" alt="${escapeHtml(p.title)}" onerror="this.src='${DEFAULT_IMAGE}'">
-            
-            ${p.status === 'pending' ? '<div class="badge-pending">VÄNTAR</div>' : ''}
-            <button class="fav-btn ${isFav ? 'active' : ''}" 
-                    onclick="event.stopPropagation(); toggleFav('${p.id}', event)"
-                    style="${isFav ? 'background: #fee2e2;' : ''}">
-              ${isFav ? '❤️' : '🤍'}
-            </button>
-          </div>
+      const imgCount = (p.images && p.images.length) ? p.images.length : 1;
+const idx = cardImageIndex[p.id] ?? 0;
+const imgUrl = p.images?.[idx] || DEFAULT_IMAGE;
+
+return `
+  <div class="card ${p.status === 'sold' ? 'sold' : ''}" onclick="openProduct('${p.id}')">
+    <div style="position: relative;">
+      <div class="card-image-wrapper" style="position: relative;">
+
+        ${imgCount > 1 ? `
+          <button class="card-img-nav left"
+            onclick="event.stopPropagation(); cardPrevImage('${p.id}')"
+            title="Föregående">‹</button>
+        ` : ''}
+
+        <img id="cardImg-${p.id}"
+             src="${imgUrl}"
+             class="card-img"
+             alt="${escapeHtml(p.title)}"
+             onerror="this.src='${DEFAULT_IMAGE}'">
+
+        ${imgCount > 1 ? `
+          <button class="card-img-nav right"
+            onclick="event.stopPropagation(); cardNextImage('${p.id}')"
+            title="Nästa">›</button>
+        ` : ''}
+
+      </div>
+
+      ${p.status === 'pending' ? '<div class="badge-pending">VÄNTAR</div>' : ''}
+
+      <button class="fav-btn ${isFav ? 'active' : ''}" 
+              onclick="event.stopPropagation(); toggleFav('${p.id}', event)"
+              style="${isFav ? 'background: #fee2e2;' : ''}">
+        ${isFav ? '❤️' : '🤍'}
+      </button>
+    </div>
           <div class="card-body">
             <div class="card-title">${escapeHtml(p.title)}</div>
             <div class="card-price">${p.price} kr</div>
@@ -591,6 +638,14 @@ import { CONFIG, ENV } from './config.js';
 
   async function openProduct(id) {
     currentProduct = products.find(p => String(p.id) === String(id));
+    const hasMultiple = (currentProduct.images || []).length > 1;
+
+const prevBtn = document.getElementById('prevImgBtn');
+const nextBtn = document.getElementById('nextImgBtn');
+
+if (prevBtn) prevBtn.classList.toggle('hidden', !hasMultiple);
+if (nextBtn) nextBtn.classList.toggle('hidden', !hasMultiple);
+
     if (!currentProduct) return;
     
     document.getElementById('modalTitle').textContent = currentProduct.title;
@@ -599,21 +654,35 @@ import { CONFIG, ENV } from './config.js';
     document.getElementById('modalDesc').textContent = currentProduct.description || 'Ingen beskrivning.';
     document.getElementById('modalSellerName').textContent = currentProduct.seller;
     document.getElementById('modalSellerAvatar').textContent = (currentProduct.seller || '??').substring(0, 2).toUpperCase();
-    
-    const mainImg = (currentProduct.images && currentProduct.images.length) ? currentProduct.images[0] : DEFAULT_IMAGE;
-    document.getElementById('modalImg').src = mainImg;
-    document.getElementById('modalImg').onerror = function() { this.src = DEFAULT_IMAGE; };
+    //hitta här
+    //const mainImg = (currentProduct.images && currentProduct.images.length) ? currentProduct.images[0] : DEFAULT_IMAGE;
+    /*document.getElementById('modalImg').src = mainImg;*/
+  
+  currentImageIndex = 0;
 
-    const thumbsDiv = document.getElementById('modalThumbs');
-    if (currentProduct.images && currentProduct.images.length > 1) {
-      thumbsDiv.innerHTML = currentProduct.images.map((img, i) => `
-        <img src="${img}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: ${i === 0 ? '2px solid var(--primary)' : '2px solid transparent'}; flex-shrink: 0;" 
-        onclick="document.getElementById('modalImg').src = this.src; document.querySelectorAll('#modalThumbs img').forEach(t => t.style.border = '2px solid transparent'); this.style.border = '2px solid var(--primary)';"
-        onerror="this.style.display='none'">
-      `).join('');
-    } else {
-      thumbsDiv.innerHTML = '';
-    }
+const thumbsDiv = document.getElementById('modalThumbs');
+if (thumbsDiv) thumbsDiv.classList.toggle('hidden', !hasMultiple);
+if (currentProduct.images && currentProduct.images.length > 1) {
+  thumbsDiv.innerHTML = currentProduct.images.map((img, i) => `
+    <img src="${img}"
+         style="width:60px;height:60px;object-fit:cover;border-radius:8px;
+                cursor:pointer;border:2px solid transparent;flex-shrink:0;"
+         onclick="selectImage(${i})"
+         onerror="this.style.display='none'">
+  `).join('');
+} else {
+  thumbsDiv.innerHTML = '';
+}
+
+// ✅ Nu när thumbs finns → rendera bilden + markera rätt thumb
+updateModalImage();
+updateArrowState();
+
+
+
+document.getElementById('modalImg').onerror = function() {
+  this.src = DEFAULT_IMAGE;
+};
     
     const statusDiv = document.getElementById('modalStatus');
     if (currentProduct.status === 'sold') {
@@ -625,8 +694,15 @@ import { CONFIG, ENV } from './config.js';
     }
     
     const isOwner = currentUser && String(currentUser.id) === String(currentProduct.sellerId);
-    document.getElementById('ownerActions').classList.toggle('hidden', !isOwner);
     document.getElementById('btnContact').style.display = isOwner ? 'none' : 'inline-flex';
+    document.getElementById('ownerActions').classList.toggle('hidden', !isOwner); 
+
+    const contactBtn = document.getElementById('btnContact');
+    const isSold = currentProduct.status === 'sold';
+
+    contactBtn.style.display = (isOwner || isSold) ? 'none' : 'inline-flex';
+    
+    
     
     if (isOwner) {
       document.getElementById('btnSold').textContent = currentProduct.status === 'sold' ? '↩ Ångra såld' : '✓ Markera som såld';
@@ -634,7 +710,7 @@ import { CONFIG, ENV } from './config.js';
     
     await updateModalFavoriteButton(id);
     showModal('productModal');
-  }
+  }//hehe
 
   async function switchTab(tab, btn) {
     currentProfileTab = tab;
@@ -1924,6 +2000,170 @@ async function contactSeller() {
   }
 }
 
+function updateModalImage() {
+  if (!currentProduct || !currentProduct.images?.length) return;
+
+  const img = document.getElementById('modalImg');
+  img.src = currentProduct.images[currentImageIndex] || DEFAULT_IMAGE;
+
+  // Markera aktiv thumbnail
+  document.querySelectorAll('#modalThumbs img').forEach((t, i) => {
+    t.style.border =
+      i === currentImageIndex
+        ? '2px solid var(--primary)'
+        : '2px solid transparent';
+  });
+}
+
+
+function updateArrowState() {
+  const prevBtn = document.getElementById('prevImgBtn');
+  const nextBtn = document.getElementById('nextImgBtn');
+
+  if (!prevBtn || !nextBtn || !currentProduct?.images) return;
+
+  const max = currentProduct.images.length - 1;
+
+  // Disable prev på första
+  prevBtn.disabled = currentImageIndex === 0;
+
+  // Disable next på sista
+  nextBtn.disabled = currentImageIndex === max;
+
+  // Visuell feedback
+  prevBtn.style.opacity = prevBtn.disabled ? '0.4' : '1';
+  nextBtn.style.opacity = nextBtn.disabled ? '0.4' : '1';
+  prevBtn.style.cursor = prevBtn.disabled ? 'not-allowed' : 'pointer';
+  nextBtn.style.cursor = nextBtn.disabled ? 'not-allowed' : 'pointer';
+}
+
+
+function nextImage() {
+  if (!currentProduct?.images) return;
+
+  if (currentImageIndex < currentProduct.images.length - 1) {
+    currentImageIndex++;
+    updateModalImage();
+  }
+
+  updateArrowState();
+}
+
+function prevImage() {
+  if (!currentProduct?.images) return;
+
+  if (currentImageIndex > 0) {
+    currentImageIndex--;
+    updateModalImage();
+  }
+
+  updateArrowState();
+}
+
+
+function selectImage(i) {
+  currentImageIndex = i;
+  updateModalImage();
+  updateArrowState();
+}
+
+
+let touchStartX = 0;
+
+document.addEventListener('touchstart', e => {
+  if (!document.getElementById('productModal').classList.contains('show')) return;
+
+  touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener('touchend', e => {
+  if (!document.getElementById('productModal').classList.contains('show')) return;
+
+  const endX = e.changedTouches[0].screenX;
+  const diff = endX - touchStartX;
+
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) prevImage();
+    else nextImage();
+  }
+});
+
+
+function updateCardArrowState(productId) {
+  const p = products.find(x => String(x.id) === String(productId));
+  if (!p?.images || p.images.length <= 1) return;
+
+  const idx = cardImageIndex[productId] ?? 0;
+  const max = p.images.length - 1;
+
+  // hitta card-elementet via bildens id
+  const imgEl = document.getElementById(`cardImg-${productId}`);
+  if (!imgEl) return;
+
+  const wrapper = imgEl.closest('.card-image-wrapper');
+  if (!wrapper) return;
+
+  const prevBtn = wrapper.querySelector('.card-img-nav.left');
+  const nextBtn = wrapper.querySelector('.card-img-nav.right');
+
+  if (prevBtn) {
+    prevBtn.disabled = idx === 0;
+    prevBtn.style.opacity = prevBtn.disabled ? '0.4' : '1';
+    prevBtn.style.cursor = prevBtn.disabled ? 'not-allowed' : 'pointer';
+  }
+  if (nextBtn) {
+    nextBtn.disabled = idx === max;
+    nextBtn.style.opacity = nextBtn.disabled ? '0.4' : '1';
+    nextBtn.style.cursor = nextBtn.disabled ? 'not-allowed' : 'pointer';
+  }
+}
+
+function updateCardImage(productId) {
+  const p = products.find(x => String(x.id) === String(productId));
+  if (!p) return;
+
+  const idx = cardImageIndex[productId] ?? 0;
+  const imgEl = document.getElementById(`cardImg-${productId}`);
+  if (imgEl) imgEl.src = p.images?.[idx] || DEFAULT_IMAGE;
+
+  updateCardArrowState(productId);
+}
+
+function cardNextImage(productId) {
+  const p = products.find(x => String(x.id) === String(productId));
+  if (!p?.images || p.images.length <= 1) return;
+
+  const idx = cardImageIndex[productId] ?? 0;
+
+  // STOPP på sista, ingen loop
+  if (idx >= p.images.length - 1) {
+    updateCardArrowState(productId);
+    return;
+  }
+
+  cardImageIndex[productId] = idx + 1;
+  updateCardImage(productId);
+}
+
+function cardPrevImage(productId) {
+  const p = products.find(x => String(x.id) === String(productId));
+  if (!p?.images || p.images.length <= 1) return;
+
+  const idx = cardImageIndex[productId] ?? 0;
+
+  // STOPP på första, ingen loop
+  if (idx <= 0) {
+    updateCardArrowState(productId);
+    return;
+  }
+
+  cardImageIndex[productId] = idx - 1;
+  updateCardImage(productId);
+}
+
+
+
+
   // Exponera funktioner globalt för HTML onclick-attribut
 window.showHome = showHome;
 window.showProfile = showProfile;
@@ -1970,3 +2210,8 @@ window.forgotPassword = forgotPassword;
 window.submitForgotPassword = submitForgotPassword;
 window.previewImages = previewImages;
 window.removeImage = removeImage;
+window.nextImage = nextImage;
+window.prevImage = prevImage;
+window.selectImage = selectImage;
+window.cardNextImage = cardNextImage;
+window.cardPrevImage = cardPrevImage;
