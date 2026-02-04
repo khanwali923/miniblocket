@@ -373,6 +373,20 @@
   cursor:not-allowed;
 }  
 
+
+.logo-img {
+  height: 45px;
+  width: auto;
+  object-fit: contain;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
 /*något saknas */
 
 
