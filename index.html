@@ -13,10 +13,16 @@
 
   <nav>
     <div class="container nav">
-      <div class="brand" onclick="showHome()">
-  <img src="assets/img/logo.png" alt="UrVuxet logga" class="logo-img">
-  <span>För saker barnen vuxit ur</span>
+    <div class="brand" onclick="showHome()">
+  <!-- Desktop -->
+  <img src="assets/img/logodesklight.png" alt="UrVuxet" class="logo logo-desktop logo-light">
+  <img src="assets/img/logodeskdark.png"  alt="UrVuxet" class="logo logo-desktop logo-dark">
+
+  <!-- Mobile -->
+  <img src="assets/img/logomoblight.png"  alt="UrVuxet" class="logo logo-mobile logo-light">
+  <img src="assets/img/logomobdark.png"   alt="UrVuxet" class="logo logo-mobile logo-dark">
 </div>
+
       <div style="display: flex; align-items: center; gap: 10px;">
         <button class="btn btn-soft" id="authBtn" onclick="openAuth()">Logga in</button>
         <button class="btn btn-primary hidden" id="sellBtn" onclick="openSellModal()">+ Sälj</button>

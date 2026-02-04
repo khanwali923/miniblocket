@@ -374,18 +374,45 @@
 }  
 
 
-.logo-img {
-  height: 45px;
-  width: auto;
-  object-fit: contain;
-}
 
+
+
+/* Brand */
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
 }
+
+/* Grund: göm alla */
+.logo { display: none; width: auto; }
+
+/* Storlekar */
+.logo-desktop { height: 56px; }
+.logo-mobile  { height: 42px; }
+
+/* ===== DEFAULT (Light + Desktop) ===== */
+.logo-desktop.logo-light { display: block; }
+
+/* ===== DARK MODE (Desktop) ===== */
+@media (prefers-color-scheme: dark) {
+  .logo-desktop.logo-light { display: none; }
+  .logo-desktop.logo-dark  { display: block; }
+}
+
+/* ===== MOBILE (Light) ===== */
+@media (max-width: 600px) {
+  .logo-desktop { display: none !important; }
+  .logo-mobile.logo-light { display: block; }
+}
+
+/* ===== MOBILE + DARK ===== */
+@media (prefers-color-scheme: dark) and (max-width: 600px) {
+  .logo-mobile.logo-light { display: none !important; }
+  .logo-mobile.logo-dark  { display: block !important; }
+}
+
 
 /*något saknas */
 
