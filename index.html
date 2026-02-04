@@ -12,7 +12,8 @@
 <body>
 
   <nav>
-    <div class="container nav">
+  <div class="container">
+    <div class="nav-inner">
       <div class="brand" onclick="showHome()">
         <!-- Desktop -->
         <img src="assets/img/logodesklight.png" alt="UrVuxet" class="logo logo-desktop logo-light">
@@ -23,7 +24,7 @@
         <img src="assets/img/logomobdark.png" alt="UrVuxet" class="logo logo-mobile logo-dark">
       </div>
 
-      <div style="display: flex; align-items: center; gap: 10px;">
+      <div class="nav-actions">
         <button class="btn btn-soft" id="authBtn" onclick="openAuth()">Logga in</button>
         <button class="btn btn-primary hidden" id="sellBtn" onclick="openSellModal()">+ Sälj</button>
         <button class="btn btn-soft hidden" id="chatBtn" onclick="openChat()" style="position: relative;">
@@ -34,7 +35,9 @@
         <div class="avatar hidden" id="userAvatar" onclick="toggleMenu(event)">??</div>
       </div>
     </div>
-  </nav>
+  </div>
+</nav>
+
 
   <div id="userMenu" class="menu-dropdown hidden">
     <div class="menu-item" onclick="showProfile()">👤 Min profil</div>
@@ -57,14 +60,51 @@
         </select>
       </div>
 
-      <div class="cats">
-        <button class="cat active" onclick="setCat('all', this)">Allt</button>
-        <button class="cat" onclick="setCat('leksaker', this)">🧸 Leksaker</button>
-        <button class="cat" onclick="setCat('barnvagn', this)">🍼 Barnvagnar</button>
-        <button class="cat" onclick="setCat('bilbarnstol', this)">🚗 Bilbarnstolar</button>
-        <button class="cat" onclick="setCat('kläder', this)">👕 Kläder</button>
-        <button class="cat" onclick="setCat('möbler', this)">🛏️ Möbler</button>
+
+      <div class="filter-row">
+        <div class="multiselect" id="catMulti">
+          <button type="button" class="ms-btn" onclick="toggleCatMenu(event)">
+            <span id="catMultiLabel">Alla kategorier</span>
+            <span class="ms-caret">▾</span>
+          </button>
+
+          <div class="ms-menu hidden" id="catMultiMenu">
+            <label class="ms-item">
+              <input type="checkbox" value="leksaker" onchange="onCatChange(event)">
+              <span>🧸 Leksaker</span>
+            </label>
+            <label class="ms-item">
+              <input type="checkbox" value="barnvagn" onchange="onCatChange(event)">
+              <span>🍼 Barnvagnar</span>
+            </label>
+            <label class="ms-item">
+              <input type="checkbox" value="bilbarnstol" onchange="onCatChange(event)">
+              <span>🚗 Bilbarnstolar</span>
+            </label>
+            <label class="ms-item">
+              <input type="checkbox" value="kläder" onchange="onCatChange(event)">
+              <span>👕 Kläder</span>
+            </label>
+            <label class="ms-item">
+              <input type="checkbox" value="möbler" onchange="onCatChange(event)">
+              <span>🛏️ Möbler</span>
+            </label>
+
+            <div class="ms-actions">
+              <button type="button" class="btn btn-soft" onclick="clearCats()">Rensa</button>
+              <button type="button" class="btn btn-primary" onclick="applyCats()">Visa</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ENDA chips-container -->
+        <div id="catChips" class="chip-row"></div>
       </div>
+
+
+      
+
+
 
       <div id="productsGrid" class="grid"></div>
       <div id="noResults" class="hidden" style="text-align: center; padding: 60px; color: #64748b;">
@@ -284,58 +324,61 @@
     </div>
   </div>
 
-  <div id="productModal" class="modal" onclick="if(event.target === this) closeModal('productModal')">
-    <div class="modal-box">
-      <div class="modal-head">
-        <h3>Annonsdetaljer</h3>
-        <button class="close-btn" onclick="closeModal('productModal')">✕</button>
-      </div>
-      <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-        <div>
-          <div class="modal-image-wrapper">
-            <button id="prevImgBtn" class="img-nav left" onclick="prevImage()">‹</button>
+ <div id="productModal" class="modal" onclick="if(event.target === this) closeModal('productModal')">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Annonsdetaljer</h3>
+      <button class="close-btn" onclick="closeModal('productModal')">✕</button>
+    </div>
 
-            <img id="modalImg">
-
-            <button id="nextImgBtn" class="img-nav right" onclick="nextImage()">›</button>
-          </div>
-          <div id="modalThumbs" style="display: flex; gap: 8px; margin-top: 12px; overflow-x: auto;"></div>
+    <div class="modal-body product-modal-body">
+      <div>
+        <div class="modal-image-wrapper">
+          <button id="prevImgBtn" class="img-nav left" onclick="prevImage()">‹</button>
+          <img id="modalImg">
+          <button id="nextImgBtn" class="img-nav right" onclick="nextImage()">›</button>
         </div>
-        <div>
-          <div id="modalStatus"></div>
-          <h2 id="modalTitle" style="font-size: 24px; font-weight: 800; margin: 8px 0;">--</h2>
-          <div id="modalPrice" style="font-size: 28px; font-weight: 800; color: var(--primary);">--</div>
-          <div id="modalMeta" style="color: #64748b; margin: 12px 0;">--</div>
+        <div id="modalThumbs" style="display:flex; gap:8px; margin-top:12px; overflow-x:auto;"></div>
+      </div>
 
-          <div style="display: flex; gap: 12px; margin: 20px 0;">
-            <div
-              style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #0ea5e9); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;"
-              id="modalSellerAvatar">??</div>
-            <div>
-              <div id="modalSellerName" style="font-weight: 700;">--</div>
-              <div style="font-size: 14px; color: #64748b;">Säljare</div>
-            </div>
+      <div>
+        <div id="modalStatus"></div>
+        <h2 id="modalTitle" style="font-size:24px; font-weight:800; margin:8px 0;">--</h2>
+        <div id="modalPrice" style="font-size:28px; font-weight:800; color:var(--primary);">--</div>
+        <div id="modalMeta" style="color:#64748b; margin:12px 0;">--</div>
+
+        <div style="display:flex; gap:12px; margin:20px 0;">
+          <div id="modalSellerAvatar"
+               style="width:50px;height:50px;border-radius:50%;
+                      background:linear-gradient(135deg,#10b981,#0ea5e9);
+                      display:flex;align-items:center;justify-content:center;
+                      color:white;font-weight:700;">??</div>
+          <div>
+            <div id="modalSellerName" style="font-weight:700;">--</div>
+            <div style="font-size:14px; color:#64748b;">Säljare</div>
           </div>
+        </div>
 
-          <p id="modalDesc" style="color: #64748b; line-height: 1.6; margin-bottom: 20px;">--</p>
+        <p id="modalDesc" style="color:#64748b; line-height:1.6; margin-bottom:20px;">--</p>
 
-          <div id="modalActions" style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="btn btn-primary" id="btnContact" onclick="contactSeller()">💬 Kontakta</button>
-            <button class="btn btn-soft" id="modalFavBtn" onclick="toggleFavoriteFromModal()">🤍 Favorit</button>
-            <button class="btn btn-warning" onclick="openReport()">🚨 Anmäl</button>
-          </div>
+        <div id="modalActions" style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-primary" id="btnContact" onclick="contactSeller()">💬 Kontakta</button>
+          <button class="btn btn-soft" id="modalFavBtn" onclick="toggleFavoriteFromModal()">🤍 Favorit</button>
+          <button class="btn btn-warning" onclick="openReport()">🚨 Anmäl</button>
+        </div>
 
-          <div id="ownerActions" class="hidden"
-            style="border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
-            <div style="font-weight: 600; margin-bottom: 10px; color: #64748b;">Hantera din annons:</div>
-            <button class="btn btn-soft" onclick="editProduct()">✏️ Redigera</button>
-            <button class="btn btn-success" id="btnSold" onclick="markSold()">✓ Markera såld</button>
-            <button class="btn btn-danger" onclick="deleteProduct()">🗑️ Ta bort annons permanent</button>
-          </div>
+        <div id="ownerActions" class="hidden"
+             style="border-top:1px solid var(--border); margin-top:20px; padding-top:20px;">
+          <div style="font-weight:600; margin-bottom:10px; color:#64748b;">Hantera din annons:</div>
+          <button class="btn btn-soft" onclick="editProduct()">✏️ Redigera</button>
+          <button class="btn btn-success" id="btnSold" onclick="markSold()">✓ Markera såld</button>
+          <button class="btn btn-danger" onclick="deleteProduct()">🗑️ Ta bort annons permanent</button>
         </div>
       </div>
     </div>
   </div>
+</div>
+
 
   <div id="reportModal" class="modal" onclick="if(event.target === this) closeModal('reportModal')">
     <div class="modal-box" style="max-width: 400px;">

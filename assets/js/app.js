@@ -12,6 +12,50 @@ import { CONFIG, ENV } from './config.js';
   let reports = [];
   let currentProfileTab = 'active';
   let localFavorites = new Set();
+  let selectedCats = new Set();
+
+
+
+  // === Scroll lock (förhindrar hopp när modaler öppnas/stängs) ===
+let __scrollY = 0;
+let __scrollLocked = false;
+
+function lockBodyScroll() {
+  if (__scrollLocked) return;
+  __scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+
+  const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+  // Lås bakgrund
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${__scrollY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+
+  if (scrollBarWidth > 0) document.body.style.paddingRight = scrollBarWidth + 'px';
+
+  __scrollLocked = true;
+}
+
+function unlockBodyScroll() {
+  if (!__scrollLocked) return;
+
+  // Återställ allt
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
+  document.body.style.paddingRight = '';
+
+  window.scrollTo(0, __scrollY);
+  __scrollLocked = false;
+}
+
+
 
   //bläddra bilder annons bilder
   let currentImageIndex = 0;
@@ -23,9 +67,10 @@ import { CONFIG, ENV } from './config.js';
   window.onload = async function() {
     try {
       console.log("Initialiserar applikationen...");
-      await loadProducts();
-      await checkSupabaseSession();
-      renderProducts();
+      renderSkeletons();     // visa direkt
+await loadProducts();
+await checkSupabaseSession();
+renderProducts();
 
       // Förbättrad event delegation för chat-listan
       const chatList = document.getElementById('chatList');
@@ -150,7 +195,23 @@ if (modal && modal.classList.contains('show')) {
   }
 }, 10000);
 
-  };
+   updateCatUI();
+  function initCatMultiSelect() {
+  const root = document.getElementById('catMulti');
+  const menu = document.getElementById('catMultiMenu');
+  if (!root || !menu) return;
+
+  // Hindra att klick inne i dropdown räknas som "utanför"
+  root.addEventListener('pointerdown', (e) => e.stopPropagation());
+  menu.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+  // Stäng bara vid klick utanför
+  document.addEventListener('pointerdown', (e) => {
+    if (!root.contains(e.target)) menu.classList.add('hidden');
+  }, true);
+}
+
+ 
 
   async function loadProducts() {
     try {
@@ -193,7 +254,7 @@ if (modal && modal.classList.contains('show')) {
         images: imgs.length ? imgs : [DEFAULT_IMAGE],
       };
     });
-  }
+  } }
 
   async function createProductInSupabase(product, imageUrls) {
     const payload = {
@@ -542,6 +603,95 @@ if (modal && modal.classList.contains('show')) {
     }
   }
 
+
+
+  function renderSkeletons(count = 6) {
+  const grid = document.getElementById('productsGrid');
+  if (!grid) return;
+
+  grid.innerHTML = Array.from({ length: count }).map(() => `
+    <div class="skeleton">
+      <div class="sk-img"></div>
+      <div class="sk-body">
+        <div class="sk-line w80"></div>
+        <div class="sk-line w60"></div>
+        <div class="sk-line w40"></div>
+      </div>
+    </div>
+  `).join('');
+
+  const noResults = document.getElementById('noResults');
+  if (noResults) noResults.classList.add('hidden');
+}
+
+
+
+
+function toggleCatMenu(e) {
+  e.stopPropagation();
+  document.getElementById('catMultiMenu')?.classList.toggle('hidden');
+}
+
+function onCatChange(e) {
+  if (e) e.stopPropagation();
+
+  const menu = document.getElementById('catMultiMenu');
+  const checks = menu ? Array.from(menu.querySelectorAll('input[type="checkbox"]')) : [];
+  selectedCats = new Set(checks.filter(c => c.checked).map(c => c.value));
+  updateCatUI();
+}
+
+function clearCats() {
+  const menu = document.getElementById('catMultiMenu');
+  if (menu) menu.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+  selectedCats.clear();
+  updateCatUI();
+  renderProducts();
+}
+
+function applyCats() {
+  document.getElementById('catMultiMenu')?.classList.add('hidden');
+  renderProducts();
+}
+
+function removeCat(cat) {
+  const menu = document.getElementById('catMultiMenu');
+  const cb = menu ? menu.querySelector(`input[type="checkbox"][value="${cat}"]`) : null;
+  if (cb) cb.checked = false;
+  selectedCats.delete(cat);
+  updateCatUI();
+  renderProducts();
+}
+
+function updateCatUI() {
+  const label = document.getElementById('catMultiLabel');
+  const chips = document.getElementById('catChips');
+
+  const names = {
+    leksaker: '🧸 Leksaker',
+    barnvagn: '🍼 Barnvagnar',
+    bilbarnstol: '🚗 Bilbarnstolar',
+    kläder: '👕 Kläder',
+    möbler: '🛏️ Möbler'
+  };
+
+  const arr = Array.from(selectedCats);
+
+  if (label) {
+    label.textContent = arr.length === 0 ? 'Alla kategorier' : `${arr.length} valda`;
+  }
+
+  if (chips) {
+    chips.innerHTML = arr.map(c => `
+      <span class="chip">
+        ${names[c] || c}
+        <button type="button" onclick="removeCat('${c}')">×</button>
+      </span>
+    `).join('');
+  }
+}
+
+
   async function renderProducts() {
    // ny funktion
     const grid = document.getElementById('productsGrid');
@@ -552,16 +702,10 @@ if (modal && modal.classList.contains('show')) {
     if (search) list = list.filter(p => p.title.toLowerCase().includes(search));
     if (loc) list = list.filter(p => p.location === loc);
 
-    const activeCatBtn = document.querySelector('.cat.active');
-    let cat = 'all';
-    if (activeCatBtn && !activeCatBtn.textContent.includes('Allt')) {
-      const match = activeCatBtn.getAttribute('onclick');
-      if (match) {
-        const found = match.match(/'(.*?)'/);
-        if (found) cat = found[1];
-      }
-    }
-    if (cat !== 'all') list = list.filter(p => p.category === cat);
+   if (selectedCats.size > 0) {
+  list = list.filter(p => selectedCats.has(p.category));
+}
+
 
     if (list.length === 0) {
       grid.innerHTML = '';
@@ -630,11 +774,11 @@ return `
     }).join('');
   }
 
-  function setCat(cat, btn) {
-    document.querySelectorAll('.cat').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderProducts();
-  }
+  function setCat() {
+  // Kategoriknappar används inte längre (dropdown används istället).
+  renderProducts();
+}
+
 
   async function openProduct(id) {
     currentProduct = products.find(p => String(p.id) === String(id));
@@ -1101,7 +1245,7 @@ document.getElementById('modalImg').onerror = function() {
     console.log("Öppnar chat...");
     document.getElementById('chatPanel').classList.add('show');
     document.getElementById('chatOverlay').classList.add('show');
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
 
     try {
       await loadConversationsDb();
@@ -1111,15 +1255,17 @@ document.getElementById('modalImg').onerror = function() {
     }
   }
 
-  function closeChat() {
+  function closeChat() { 
     console.log("Stänger chat");
     cleanupChatRealtime();
     document.getElementById('chatPanel').classList.remove('show');
     document.getElementById('chatOverlay').classList.remove('show');
     document.getElementById('chatConversation').classList.add('hidden');
-    currentChat = null;
-    currentChatId = null;
-    document.body.style.overflow = '';
+currentChat = null;
+currentChatId = null;
+
+const anyModalOpen = document.querySelector('.modal.show');
+if (!anyModalOpen) unlockBodyScroll();
   }
 
   async function loadConversationsDb() {
@@ -1941,20 +2087,34 @@ async function contactSeller() {
   }
 
   function showModal(id) {
-    const modal = document.getElementById(id);
-    modal.classList.add('show');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-  }
+  const modal = document.getElementById(id);
+  modal.classList.add('show');
+  modal.style.display = 'flex';
+  lockBodyScroll();
+
+  // Förhindra layout-jump när scrollbar försvinner
+  const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+  document.body.style.overflow = 'hidden';
+  if (scrollBarWidth > 0) document.body.style.paddingRight = scrollBarWidth + 'px';
+}
 
   function closeModal(id) {
-    const modal = document.getElementById(id);
-    modal.classList.remove('show');
-    setTimeout(() => { modal.style.display = 'none'; }, 300);
-    if (!document.getElementById('chatPanel').classList.contains('show')) {
-      document.body.style.overflow = '';
+  const modal = document.getElementById(id);
+  modal.classList.remove('show');
+
+  setTimeout(() => {
+    modal.style.display = 'none';
+
+    const anyModalOpen = document.querySelector('.modal.show');
+    const chatOpen = document.getElementById('chatPanel')?.classList.contains('show');
+
+    if (!anyModalOpen && !chatOpen) {
+      unlockBodyScroll();
     }
-  }
+  }, 300);
+}
+
+
 
   function closeAllModals() {
     ['authModal', 'sellModal', 'productModal', 'reportModal', 'deleteModal', 'forgotPasswordModal'].forEach(id => {
@@ -2164,6 +2324,7 @@ function cardPrevImage(productId) {
 
 
 
+
   // Exponera funktioner globalt för HTML onclick-attribut
 window.showHome = showHome;
 window.showProfile = showProfile;
@@ -2215,4 +2376,9 @@ window.prevImage = prevImage;
 window.selectImage = selectImage;
 window.cardNextImage = cardNextImage;
 window.cardPrevImage = cardPrevImage;
+window.toggleCatMenu = toggleCatMenu;
+window.onCatChange = onCatChange;
+window.clearCats = clearCats;
+window.applyCats = applyCats;
+window.removeCat = removeCat;
 /*något saknas */
