@@ -1721,3 +1721,15 @@
       line-height: 18px;
     }
   }
+
+  /* Komprimera bara Sälj-knappen på mobil */
+@media (max-width: 600px) {
+  #sellBtn {
+    padding: 8px 10px;      /* mindre */
+    min-height: 36px;       /* lägre än 44px */
+    border-radius: 12px;
+    font-size: 14px;
+    gap: 6px;
+  }
+}
+
