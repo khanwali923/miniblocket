@@ -2381,4 +2381,4 @@ window.onCatChange = onCatChange;
 window.clearCats = clearCats;
 window.applyCats = applyCats;
 window.removeCat = removeCat;
-/*något saknas */
+
