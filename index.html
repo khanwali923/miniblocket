@@ -449,8 +449,8 @@
         </div>
         <div id="chatList" class="chat-list"></div>
       </div>
-      <div id="chatConversation" class="chat-main hidden"
-        style="position: absolute; inset: 0; background: white; z-index: 10;">
+      <div id="chatConversation" class="chat-main hidden">
+
         <div class="chat-header">
           <div style="display: flex; align-items: center; gap: 12px;">
             <div id="chatAvatar"
@@ -482,8 +482,7 @@
 
         <div id="chatMessages" class="chat-messages"></div>
         <div class="chat-input">
-          <input type="text" id="msgInput" placeholder="Skriv ett meddelande..."
-            onkeypress="if(event.key === 'Enter') sendMessage()">
+          <input type="text" id="msgInput" placeholder="Skriv ett meddelande...">
           <button class="send-btn" onclick="sendMessage()">➤</button>
         </div>
       </div>

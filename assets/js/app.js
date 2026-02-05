@@ -22,6 +22,7 @@ let __scrollY = 0;
 
 function lockBodyScroll() {
   __scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+  unlockBodyScroll._pageId = document.querySelector('.page.active')?.id || '';
   document.body.style.overflow = 'hidden';
   document.body.style.paddingRight = (window.innerWidth - document.documentElement.clientWidth) + 'px';
 }
@@ -29,8 +30,17 @@ function lockBodyScroll() {
 function unlockBodyScroll() {
   document.body.style.overflow = '';
   document.body.style.paddingRight = '';
-  window.scrollTo(0, __scrollY);
+
+  // Återställ bara scroll om vi fortfarande är på samma "page"
+  // (dvs ingen page-navigation har skett under tiden)
+  const activePage = document.querySelector('.page.active')?.id || '';
+  if (unlockBodyScroll._pageId && unlockBodyScroll._pageId === activePage) {
+    window.scrollTo(0, __scrollY);
+  }
+
+  unlockBodyScroll._pageId = null;
 }
+
 
 
 
