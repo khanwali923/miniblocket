@@ -607,8 +607,7 @@ textarea:focus {
 }
 
 .search-bar {
-  position: sticky;
-  top: 62px;
+  position: relative; /* Ändrat från sticky */
   z-index: 50;
   display: flex;
   gap: 12px;
@@ -622,16 +621,6 @@ textarea:focus {
 }
 
 @media (max-width: 768px) {
-  .search-bar {
-    position: relative;
-    top: auto;
-  }
-  
-  .filter-row {
-    position: relative;
-    top: auto;
-  }
-  
   .page {
     min-height: auto !important;
     padding-bottom: 20px;
@@ -662,8 +651,7 @@ textarea:focus {
 }
 
 .filter-row {
-  position: sticky;
-  top: 128px;
+  position: relative; /* Ändrat från sticky */
   z-index: 49;
   margin-bottom: 16px;
 }
@@ -1983,21 +1971,22 @@ textarea {
 
 .multiselect {
   position: relative;
+  z-index: 60; /* Högre än search-bar (50) men lägre än nav (100) */
 }
 
-.ms-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: var(--input-bg);
-  color: var(--text);
+.ms-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 12px 14px;
-  cursor: pointer;
-  font-weight: 600;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  padding: 10px;
+  z-index: 70; /* Högre än multiselect */
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .ms-caret {
