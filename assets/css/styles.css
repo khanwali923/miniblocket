@@ -1912,6 +1912,34 @@ textarea:focus {
   }
 }
 
+/* ✅ iOS Safari: gör modal-innehåll touch-scrollbart */
+.modal-box {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* momentum scroll på iOS */
+  max-height: calc(100dvh - 40px);   /* bättre än 90vh på iPhone */
+}
+
+/* Sticky header + scroll i body: funkar bäst om body får vara scroll-ytan */
+.modal-body {
+  overflow: visible;
+}
+
+/* Extra stabilitet på iOS */
+@supports (-webkit-touch-callout: none) {
+  .modal {
+    align-items: center !important; /* flex-end kan ibland låsa scroll */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .modal-box {
+    max-height: calc(
+      100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px
+    );
+  }
+}
+
+
 
 
 

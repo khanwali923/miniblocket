@@ -2640,6 +2640,8 @@ function showModal(id) {
 
   modal.classList.add('show');
   modal.style.display = 'flex';
+  const box = modal.querySelector('.modal-box');
+if (box) box.scrollTop = 0;
   lockBodyScroll();
 }
 
