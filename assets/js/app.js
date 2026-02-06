@@ -1,3 +1,19 @@
+// app.js (komplett)
+// - Innehåller ALLA funktioner (inga placeholders borttagna)
+// - Har “Reject-modul”: adminRejectProduct + moderation-logg + notis + statusflöde
+// - Non-admin: ny annons -> pending + visible=false (ej publik)
+// - Rejected: visible=false, syns bara för säljaren i profilen + resubmit-knapp
+// - Admin: historik-tab (“history”) med filter/sök + visar rejected-metadata
+// - Reports: 100% i DB (ingen lokal reports-array)
+// - Admin badges: pending från products-array + reports från DB
+//
+// OBS: För reject-modulen används tabeller/kolumner:
+// products: status, visible, rejected_reason, rejected_at, rejected_by, resubmitted_at, updated_at
+// notifications: user_id, type, title, body, product_id, is_read, created_at
+// product_moderation_events: product_id, action, reason, actor_id, created_at
+//
+// Om du saknar någon av dessa i Supabase: säg till så skickar jag SQL-migration.
+
 import { sb } from './supabaseClient.js';
 import { CONFIG, ENV } from './config.js';
 
@@ -20,12 +36,14 @@ function lockBodyScroll() {
   __scrollY = window.scrollY || document.documentElement.scrollTop || 0;
   unlockBodyScroll._pageId = document.querySelector('.page.active')?.id || '';
   document.body.style.overflow = 'hidden';
-  document.body.style.paddingRight = (window.innerWidth - document.documentElement.clientWidth) + 'px';
+  document.body.style.paddingRight =
+    (window.innerWidth - document.documentElement.clientWidth) + 'px';
 }
 
 function unlockBodyScroll() {
   document.body.style.overflow = '';
   document.body.style.paddingRight = '';
+
   const activePage = document.querySelector('.page.active')?.id || '';
   if (unlockBodyScroll._pageId && unlockBodyScroll._pageId === activePage) {
     window.scrollTo(0, __scrollY);
@@ -36,7 +54,7 @@ function unlockBodyScroll() {
 // === Bilder ===
 let currentImageIndex = 0;
 const cardImageIndex = {};
-const DEFAULT_IMAGE = "https://placehold.co/600x400?text=Ingen+bild";
+const DEFAULT_IMAGE = 'https://placehold.co/600x400?text=Ingen+bild';
 
 // ===========================
 // ✅ STATUS / VISIBILITY RULES
@@ -47,11 +65,15 @@ function isPublicProduct(p) {
 }
 
 function normalizeProductFromDb(p) {
-  const uniqueImages = [...new Map((p.product_images || [])
-    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-    .map(img => [img.url, img])).values()];
+  const uniqueImages = [
+    ...new Map(
+      (p.product_images || [])
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map((img) => [img.url, img])
+    ).values(),
+  ];
 
-  const imgs = uniqueImages.map(img => img.url);
+  const imgs = uniqueImages.map((img) => img.url);
 
   return {
     id: p.id,
@@ -60,21 +82,20 @@ function normalizeProductFromDb(p) {
     category: p.category,
     location: p.location,
     description: p.description,
-    seller: p.seller || "Anonym",
+    seller: p.seller || 'Anonym',
     sellerId: p.seller_id,
     status: p.status || 'active',
     visible: p.visible !== false,
     createdAt: p.created_at,
-    date: p.created_at ? new Date(p.created_at).toLocaleDateString('sv-SE') : "",
+    updatedAt: p.updated_at || null,
+    date: p.created_at ? new Date(p.created_at).toLocaleDateString('sv-SE') : '',
     images: imgs.length ? imgs : [DEFAULT_IMAGE],
 
-    // optional för reject-flow:
+    // reject-flow (om finns)
     rejected_reason: p.rejected_reason ?? null,
     rejected_at: p.rejected_at ?? null,
     rejected_by: p.rejected_by ?? null,
     resubmitted_at: p.resubmitted_at ?? null,
-    updatedAt: p.updated_at || null
-    
   };
 }
 
@@ -83,59 +104,84 @@ function normalizeProductFromDb(p) {
 // =====================
 async function adminNotifyUser({ userId, type, title, body, productId }) {
   if (!sb) return;
-  const { error } = await sb.from('notifications').insert([{
-    user_id: userId,
-    type,
-    title,
-    body,
-    product_id: productId ?? null,
-    is_read: false
-  }]);
+  const { error } = await sb.from('notifications').insert([
+    {
+      user_id: userId,
+      type,
+      title,
+      body,
+      product_id: productId ?? null,
+      is_read: false,
+    },
+  ]);
+  if (error) throw error;
+}
+
+async function adminLogModeration({ productId, action, reason = null }) {
+  if (!sb) return;
+  // Om tabellen inte finns: detta kan kasta. Vill du “soft-faila” så säg till.
+  const { error } = await sb.from('product_moderation_events').insert([
+    {
+      product_id: Number(productId),
+      action,
+      reason,
+      actor_id: currentUser?.id || null,
+      created_at: new Date().toISOString(),
+    },
+  ]);
   if (error) throw error;
 }
 
 async function adminApproveProduct(productId) {
   if (!currentUser?.isAdmin) throw new Error('Endast admin');
 
-  // approve => active + visible=true
+  // 1) Hämta produkt för notis
+  const { data: prod, error: pErr } = await sb
+    .from('products')
+    .select('id, seller_id, title')
+    .eq('id', productId)
+    .single();
+
+  if (pErr) throw pErr;
+
+  // 2) approve => active + visible=true
   const { error } = await sb
     .from('products')
     .update({
       status: 'active',
       visible: true,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
     .eq('id', productId);
 
   if (error) throw error;
 
-  // option: notis till säljaren (valfritt men rekommenderas)
-  try {
-    const { data: prod } = await sb
-      .from('products')
-      .select('id, seller_id, title')
-      .eq('id', productId)
-      .single();
+  // 3) logg
+  await adminLogModeration({ productId, action: 'approve', reason: null });
 
-    if (prod?.seller_id) {
+  // 4) notis (valfri men rekommenderad)
+  if (prod?.seller_id) {
+    try {
       await adminNotifyUser({
         userId: prod.seller_id,
         type: 'product_approved',
         title: 'Din annons är godkänd',
         body: `Annons: ${prod.title}\nStatus: Godkänd och publicerad.`,
-        productId: prod.id
+        productId: prod.id,
       });
+    } catch (e) {
+      console.warn('approve notify failed:', e);
     }
-  } catch (e) {
-    // Notis får inte krascha approve
-    console.warn('approve notify failed:', e);
   }
+
+  return true;
 }
 
 async function adminRejectProduct(productId, reason) {
   if (!currentUser?.isAdmin) throw new Error('Inte behörig');
 
-  const cleanReason = reason.trim();
+  const cleanReason = (reason || '').trim();
+  if (!cleanReason) throw new Error('Orsak saknas');
 
   // 1) Hämta produkt
   const { data: prod, error: pErr } = await sb
@@ -156,44 +202,31 @@ async function adminRejectProduct(productId, reason) {
       visible: false,
       rejected_reason: cleanReason,
       rejected_at: rejectedAt,
-      rejected_by: currentUser.id
+      rejected_by: currentUser.id,
+      updated_at: rejectedAt,
     })
     .eq('id', productId);
 
   if (uErr) throw uErr;
 
   // 3) Moderation-logg
-  const { error: mErr } = await sb
-    .from('product_moderation_events')
-    .insert([{
-      product_id: Number(prod.id),
-      action: 'reject',
-      reason: cleanReason,
-      actor_id: currentUser.id,
-      created_at: rejectedAt
-    }]);
+  await adminLogModeration({
+    productId: prod.id,
+    action: 'reject',
+    reason: cleanReason,
+  });
 
-  if (mErr) throw mErr;
-
-  // 4) Notis
-  const { error: nErr } = await sb
-    .from('notifications')
-    .insert([{
-      user_id: prod.seller_id,
-      type: 'product_rejected',
-      title: 'Din annons blev avvisad',
-      body: `Annons: ${prod.title}\nAnledning: ${cleanReason}`,
-      product_id: Number(prod.id),
-      is_read: false
-    }]);
-
-  if (nErr) throw nErr;
+  // 4) Notis till säljaren
+  await adminNotifyUser({
+    userId: prod.seller_id,
+    type: 'product_rejected',
+    title: 'Din annons blev avvisad',
+    body: `Annons: ${prod.title}\nAnledning: ${cleanReason}`,
+    productId: prod.id,
+  });
 
   return true;
 }
-
-
-
 
 function formatDateTimeSv(iso) {
   if (!iso) return '—';
@@ -205,20 +238,24 @@ function formatDateTimeSv(iso) {
 }
 
 function adminStatusLabel(status) {
-  if (status === 'active') return `<span class="status-badge-small status-active">AKTIV</span>`;
-  if (status === 'pending') return `<span class="status-badge-small status-pending">PENDING</span>`;
-  if (status === 'rejected') return `<span class="status-badge-small" style="background:#fee2e2;color:#991b1b;">REJECTED</span>`;
+  if (status === 'active')
+    return `<span class="status-badge-small status-active">AKTIV</span>`;
+  if (status === 'pending')
+    return `<span class="status-badge-small status-pending">PENDING</span>`;
+  if (status === 'rejected')
+    return `<span class="status-badge-small" style="background:#fee2e2;color:#991b1b;">REJECTED</span>`;
   if (status === 'sold') return `<span class="badge-sold">SÅLD</span>`;
-  return `<span class="status-badge-small" style="background:#e2e8f0;color:#0f172a;">${escapeHtml(status || '—')}</span>`;
+  return `<span class="status-badge-small" style="background:#e2e8f0;color:#0f172a;">${escapeHtml(
+    status || '—'
+  )}</span>`;
 }
-
 
 // ===========================
 // INIT
 // ===========================
 window.onload = async function () {
   try {
-    console.log("Initialiserar applikationen...");
+    console.log('Initialiserar applikationen...');
 
     renderSkeletons();
     await loadProducts();
@@ -234,8 +271,8 @@ window.onload = async function () {
         if (e.target.closest('.delete-conv')) return;
 
         const id = row.getAttribute('data-id');
-        if (!id || id === "null" || id === "undefined") {
-          showToast("Fel: Konversationen har inget ID");
+        if (!id || id === 'null' || id === 'undefined') {
+          showToast('Fel: Konversationen har inget ID');
           return;
         }
         openConversationDb(id);
@@ -252,9 +289,14 @@ window.onload = async function () {
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         closeAllModals();
-        const panelOpen = document.getElementById('chatPanel')?.classList.contains('show');
+        const panelOpen = document
+          .getElementById('chatPanel')
+          ?.classList.contains('show');
         if (panelOpen) {
-          if (!document.getElementById('chatConversation').classList.contains('hidden')) backToChatList();
+          if (
+            !document.getElementById('chatConversation').classList.contains('hidden')
+          )
+            backToChatList();
           else closeChat();
         }
       }
@@ -273,9 +315,11 @@ window.onload = async function () {
         const chatConv = document.getElementById('chatConversation');
         const msgInput = document.getElementById('msgInput');
 
-        if (chatPanel?.classList.contains('show') &&
+        if (
+          chatPanel?.classList.contains('show') &&
           !chatConv?.classList.contains('hidden') &&
-          document.activeElement === msgInput) {
+          document.activeElement === msgInput
+        ) {
           e.preventDefault();
           sendMessage();
         }
@@ -292,12 +336,12 @@ window.onload = async function () {
     // Auth state change
     if (sb) {
       sb.auth.onAuthStateChange(async (event, session) => {
-        console.log("Auth state change:", event, session?.user?.id);
+        console.log('Auth state change:', event, session?.user?.id);
 
         if (event === 'PASSWORD_RECOVERY') {
           showToast('Välj ett nytt lösenord');
           setTimeout(() => {
-            const newPass = prompt("Ange ditt nya lösenord (minst 6 tecken):");
+            const newPass = prompt('Ange ditt nya lösenord (minst 6 tecken):');
             if (newPass && newPass.length >= 6) {
               sb.auth.updateUser({ password: newPass }).then(({ error }) => {
                 if (error) showToast('Kunde inte uppdatera: ' + error.message);
@@ -319,7 +363,7 @@ window.onload = async function () {
           const notifs = await fetchUnreadNotifications();
           if (notifs.length) {
             showToast(notifs[0].title);
-            await markNotificationsRead(notifs.map(n => n.id));
+            await markNotificationsRead(notifs.map((n) => n.id));
           }
         }
       });
@@ -332,10 +376,10 @@ window.onload = async function () {
     updateCatUI();
     initCatMultiSelect();
 
-    console.log("Applikation initialiserad");
+    console.log('Applikation initialiserad');
   } catch (err) {
-    console.error("Init error:", err);
-    showToast("Fel vid uppstart: " + err.message);
+    console.error('Init error:', err);
+    showToast('Fel vid uppstart: ' + err.message);
   }
 };
 
@@ -347,9 +391,13 @@ function initCatMultiSelect() {
   root.addEventListener('pointerdown', (e) => e.stopPropagation());
   menu.addEventListener('pointerdown', (e) => e.stopPropagation());
 
-  document.addEventListener('pointerdown', (e) => {
-    if (!root.contains(e.target)) menu.classList.add('hidden');
-  }, true);
+  document.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!root.contains(e.target)) menu.classList.add('hidden');
+    },
+    true
+  );
 }
 
 // ===========================
@@ -358,18 +406,18 @@ function initCatMultiSelect() {
 async function loadProducts() {
   try {
     products = await fetchProductsFromSupabase();
-    console.log("Loaded products:", products.length);
+    console.log('Loaded products:', products.length);
   } catch (e) {
-    console.error("Kunde inte ladda produkter:", e);
+    console.error('Kunde inte ladda produkter:', e);
     products = [];
   }
 }
 
 async function fetchProductsFromSupabase() {
   const { data, error } = await sb
-    .from("products")
+    .from('products')
     .select(`*, product_images ( url, sort_order )`)
-    .order("created_at", { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
   return (data || []).map(normalizeProductFromDb);
@@ -385,11 +433,12 @@ async function createProductInSupabase(product, imageUrls) {
     seller: product.seller,
     seller_id: product.sellerId,
     status: product.status,
-    visible: product.visible
+    visible: product.visible,
+    updated_at: new Date().toISOString(),
   };
 
   const { data: created, error: pErr } = await sb
-    .from("products")
+    .from('products')
     .insert([payload])
     .select()
     .single();
@@ -400,9 +449,9 @@ async function createProductInSupabase(product, imageUrls) {
     const rows = imageUrls.map((url, i) => ({
       product_id: created.id,
       url: url,
-      sort_order: i
+      sort_order: i,
     }));
-    const { error } = await sb.from("product_images").insert(rows);
+    const { error } = await sb.from('product_images').insert(rows);
     if (error) throw error;
   }
   return created;
@@ -410,28 +459,28 @@ async function createProductInSupabase(product, imageUrls) {
 
 async function updateProductInSupabase(productId, updates, imageUrls) {
   const { error: pErr } = await sb
-    .from("products")
+    .from('products')
     .update({
       title: updates.title,
       price: updates.price,
       category: updates.category,
       location: updates.location,
       description: updates.description,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
-    .eq("id", productId);
+    .eq('id', productId);
 
   if (pErr) throw pErr;
 
   if (imageUrls) {
-    await sb.from("product_images").delete().eq("product_id", productId);
+    await sb.from('product_images').delete().eq('product_id', productId);
     if (imageUrls.length > 0) {
       const rows = imageUrls.map((url, i) => ({
         product_id: productId,
         url: url,
-        sort_order: i
+        sort_order: i,
       }));
-      const { error } = await sb.from("product_images").insert(rows);
+      const { error } = await sb.from('product_images').insert(rows);
       if (error) throw error;
     }
   }
@@ -439,23 +488,23 @@ async function updateProductInSupabase(productId, updates, imageUrls) {
 }
 
 async function deleteProductFromSupabase(productId) {
-  const { error } = await sb.from("products").delete().eq("id", productId);
+  const { error } = await sb.from('products').delete().eq('id', productId);
   if (error) throw error;
   return true;
 }
 
 async function updateProductStatus(productId, status) {
   const { error } = await sb
-    .from("products")
+    .from('products')
     .update({ status: status, updated_at: new Date().toISOString() })
-    .eq("id", productId);
+    .eq('id', productId);
 
   if (error) {
     // fallback (om updated_at saknas i schema)
     const { error: err2 } = await sb
-      .from("products")
+      .from('products')
       .update({ status: status })
-      .eq("id", productId);
+      .eq('id', productId);
     if (err2) throw err2;
   }
 }
@@ -464,7 +513,7 @@ async function checkSupabaseSession() {
   if (!sb) return;
   const { data, error } = await sb.auth.getSession();
   if (error) {
-    console.error("Session error:", error);
+    console.error('Session error:', error);
     return;
   }
   if (data?.session?.user) await loginFromAuth(data.session.user);
@@ -504,38 +553,58 @@ function toggleAuthMode() {
 }
 
 function updateAuthUI() {
-  document.getElementById('authTitle').textContent = authMode === 'login' ? 'Logga in' : 'Skapa konto';
-  document.getElementById('authActionBtn').textContent = authMode === 'login' ? 'Logga in' : 'Registrera dig';
-  document.getElementById('authToggleBtn').textContent = authMode === 'login' ? 'Skapa konto istället' : 'Har du redan konto?';
+  document.getElementById('authTitle').textContent =
+    authMode === 'login' ? 'Logga in' : 'Skapa konto';
+  document.getElementById('authActionBtn').textContent =
+    authMode === 'login' ? 'Logga in' : 'Registrera dig';
+  document.getElementById('authToggleBtn').textContent =
+    authMode === 'login' ? 'Skapa konto istället' : 'Har du redan konto?';
   document.getElementById('authNameField').classList.toggle('hidden', authMode === 'login');
 }
 
 async function handleAuth() {
-  if (!sb) { showToast('Databasen är inte ansluten'); return; }
+  if (!sb) {
+    showToast('Databasen är inte ansluten');
+    return;
+  }
   const email = document.getElementById('authEmail').value.trim().toLowerCase();
   const pass = document.getElementById('authPass').value;
-  if (!email || !pass) { showToast('Fyll i e-post och lösenord'); return; }
+  if (!email || !pass) {
+    showToast('Fyll i e-post och lösenord');
+    return;
+  }
 
   try {
     if (authMode === 'signup') {
       const name = document.getElementById('authName').value.trim();
-      if (!name) { showToast('Fyll i namn'); return; }
+      if (!name) {
+        showToast('Fyll i namn');
+        return;
+      }
 
       const { data, error } = await sb.auth.signUp({
-        email, password: pass, options: { data: { name } }
+        email,
+        password: pass,
+        options: { data: { name } },
       });
-      if (error) { showToast(error.message || 'Kunde inte skapa konto'); return; }
+      if (error) {
+        showToast(error.message || 'Kunde inte skapa konto');
+        return;
+      }
 
       if (!data?.session) {
-        showToast("Konto skapat! Bekräfta e-post innan du kan logga in.");
+        showToast('Konto skapat! Bekräfta e-post innan du kan logga in.');
         closeModal('authModal');
         return;
       }
-      closeModal("authModal");
+      closeModal('authModal');
       await loginFromAuth(data.session.user);
     } else {
       const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-      if (error) { showToast('Fel e-post eller lösenord'); return; }
+      if (error) {
+        showToast('Fel e-post eller lösenord');
+        return;
+      }
       closeModal('authModal');
       if (data?.user) await loginFromAuth(data.user);
     }
@@ -545,24 +614,37 @@ async function handleAuth() {
 }
 
 async function loginFromAuth(authUser) {
-  console.log("Loggar in användare:", authUser.id);
+  console.log('Loggar in användare:', authUser.id);
   let profile = await getMyProfile(authUser.id);
 
   if (!profile) {
-    const { data: newProfile } = await sb.from('profiles').insert([{
-      id: authUser.id,
-      name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || "Användare",
-      email: authUser.email,
-      is_admin: false
-    }]).select().single();
+    const { data: newProfile } = await sb
+      .from('profiles')
+      .insert([
+        {
+          id: authUser.id,
+          name:
+            authUser.user_metadata?.name ||
+            authUser.email?.split('@')[0] ||
+            'Användare',
+          email: authUser.email,
+          is_admin: false,
+        },
+      ])
+      .select()
+      .single();
     if (newProfile) profile = newProfile;
   }
 
   currentUser = {
     id: authUser.id,
     email: authUser.email,
-    name: (profile?.name || authUser.user_metadata?.name || authUser.email?.split('@')[0] || "Användare"),
-    isAdmin: !!profile?.is_admin
+    name:
+      profile?.name ||
+      authUser.user_metadata?.name ||
+      authUser.email?.split('@')[0] ||
+      'Användare',
+    isAdmin: !!profile?.is_admin,
   };
 
   await refreshFavoritesCache();
@@ -570,7 +652,6 @@ async function loginFromAuth(authUser) {
   updateChatBadge();
   showToast('Välkommen ' + currentUser.name + '!');
 
-  // admin badges
   if (currentUser.isAdmin) {
     await updateAdminBadgesDb();
   }
@@ -582,7 +663,7 @@ function applyLoggedInUI(user) {
   document.getElementById('sellBtn').classList.remove('hidden');
   document.getElementById('chatBtn').classList.remove('hidden');
 
-  const initials = (user.name || "??").substring(0, 2).toUpperCase();
+  const initials = (user.name || '??').substring(0, 2).toUpperCase();
   document.getElementById('userAvatar').textContent = initials;
   document.getElementById('pName').textContent = user.name;
   document.getElementById('pEmail').textContent = user.email;
@@ -620,7 +701,7 @@ function toggleMenu(e) {
 // NAV / PAGES
 // ===========================
 function hideAllPages() {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
 }
 
 function showHome() {
@@ -642,7 +723,10 @@ function showProfile() {
 }
 
 function showAdmin() {
-  if (!currentUser?.isAdmin) { showToast('Endast för administratörer'); return; }
+  if (!currentUser?.isAdmin) {
+    showToast('Endast för administratörer');
+    return;
+  }
   hideAllPages();
   document.getElementById('pageAdmin').classList.add('active');
   setAdminTab('overview', document.querySelector('.admin-nav-item'));
@@ -661,13 +745,16 @@ async function refreshFavoritesCache() {
     .eq('user_id', currentUser.id);
 
   if (!error && data) {
-    localFavorites = new Set(data.map(f => String(f.product_id)));
+    localFavorites = new Set(data.map((f) => String(f.product_id)));
   }
 }
 
 async function toggleFav(id, event) {
   if (event) event.stopPropagation();
-  if (!currentUser) { showToast('Logga in för att spara favoriter'); return; }
+  if (!currentUser) {
+    showToast('Logga in för att spara favoriter');
+    return;
+  }
 
   const productId = String(id);
   const isCurrentlyFav = localFavorites.has(productId);
@@ -683,7 +770,10 @@ async function toggleFav(id, event) {
   renderProducts();
   updateChatBadge();
 
-  if (document.getElementById('pageProfile').classList.contains('active') && currentProfileTab === 'favorites') {
+  if (
+    document.getElementById('pageProfile').classList.contains('active') &&
+    currentProfileTab === 'favorites'
+  ) {
     const activeBtn = document.querySelector('#pageProfile .tab-btn.active');
     if (activeBtn) switchTab('favorites', activeBtn);
   }
@@ -694,12 +784,16 @@ async function toggleFav(id, event) {
 
   try {
     if (isCurrentlyFav) {
-      await sb.from('favorites').delete().eq('user_id', currentUser.id).eq('product_id', productId);
+      await sb
+        .from('favorites')
+        .delete()
+        .eq('user_id', currentUser.id)
+        .eq('product_id', productId);
     } else {
       await sb.from('favorites').insert([{ user_id: currentUser.id, product_id: productId }]);
     }
   } catch (e) {
-    console.error("Favoritfel:", e);
+    console.error('Favoritfel:', e);
     showToast('Kunde inte spara ändring, återställer...');
     if (isCurrentlyFav) localFavorites.add(productId);
     else localFavorites.delete(productId);
@@ -758,7 +852,9 @@ function renderSkeletons(count = 6) {
   const grid = document.getElementById('productsGrid');
   if (!grid) return;
 
-  grid.innerHTML = Array.from({ length: count }).map(() => `
+  grid.innerHTML = Array.from({ length: count })
+    .map(
+      () => `
     <div class="skeleton">
       <div class="sk-img"></div>
       <div class="sk-body">
@@ -767,7 +863,9 @@ function renderSkeletons(count = 6) {
         <div class="sk-line w40"></div>
       </div>
     </div>
-  `).join('');
+  `
+    )
+    .join('');
 
   const noResults = document.getElementById('noResults');
   if (noResults) noResults.classList.add('hidden');
@@ -782,13 +880,13 @@ function onCatChange(e) {
   if (e) e.stopPropagation();
   const menu = document.getElementById('catMultiMenu');
   const checks = menu ? Array.from(menu.querySelectorAll('input[type="checkbox"]')) : [];
-  selectedCats = new Set(checks.filter(c => c.checked).map(c => c.value));
+  selectedCats = new Set(checks.filter((c) => c.checked).map((c) => c.value));
   updateCatUI();
 }
 
 function clearCats() {
   const menu = document.getElementById('catMultiMenu');
-  if (menu) menu.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+  if (menu) menu.querySelectorAll('input[type="checkbox"]').forEach((c) => (c.checked = false));
   selectedCats.clear();
   updateCatUI();
   renderProducts();
@@ -817,7 +915,7 @@ function updateCatUI() {
     barnvagn: '🍼 Barnvagnar',
     bilbarnstol: '🚗 Bilbarnstolar',
     kläder: '👕 Kläder',
-    möbler: '🛏️ Möbler'
+    möbler: '🛏️ Möbler',
   };
 
   const arr = Array.from(selectedCats);
@@ -827,12 +925,16 @@ function updateCatUI() {
   }
 
   if (chips) {
-    chips.innerHTML = arr.map(c => `
+    chips.innerHTML = arr
+      .map(
+        (c) => `
       <span class="chip">
         ${names[c] || c}
         <button type="button" onclick="removeCat('${c}')">×</button>
       </span>
-    `).join('');
+    `
+      )
+      .join('');
   }
 }
 
@@ -846,9 +948,9 @@ async function renderProducts() {
 
   let list = products.filter(isPublicProduct);
 
-  if (search) list = list.filter(p => (p.title || '').toLowerCase().includes(search));
-  if (loc) list = list.filter(p => p.location === loc);
-  if (selectedCats.size > 0) list = list.filter(p => selectedCats.has(p.category));
+  if (search) list = list.filter((p) => (p.title || '').toLowerCase().includes(search));
+  if (loc) list = list.filter((p) => p.location === loc);
+  if (selectedCats.size > 0) list = list.filter((p) => selectedCats.has(p.category));
 
   if (list.length === 0) {
     grid.innerHTML = '';
@@ -865,22 +967,27 @@ async function renderProducts() {
     cardImageIndex[p.id] = Math.min(Math.max(cardImageIndex[p.id], 0), max);
   }
 
-  grid.innerHTML = list.map(p => {
-    const isFav = favIds.includes(String(p.id));
-    const imgCount = (p.images && p.images.length) ? p.images.length : 1;
-    const idx = cardImageIndex[p.id] ?? 0;
-    const imgUrl = p.images?.[idx] || DEFAULT_IMAGE;
+  grid.innerHTML = list
+    .map((p) => {
+      const isFav = favIds.includes(String(p.id));
+      const imgCount = p.images?.length ? p.images.length : 1;
+      const idx = cardImageIndex[p.id] ?? 0;
+      const imgUrl = p.images?.[idx] || DEFAULT_IMAGE;
 
-    return `
+      return `
       <div class="card" onclick="openProduct('${p.id}')">
         <div style="position: relative;">
           <div class="card-image-wrapper" style="position: relative;">
 
-            ${imgCount > 1 ? `
+            ${
+              imgCount > 1
+                ? `
               <button class="card-img-nav left"
                 onclick="event.stopPropagation(); cardPrevImage('${p.id}')"
                 title="Föregående">‹</button>
-            ` : ''}
+            `
+                : ''
+            }
 
             <img id="cardImg-${p.id}"
                  src="${imgUrl}"
@@ -888,11 +995,15 @@ async function renderProducts() {
                  alt="${escapeHtml(p.title)}"
                  onerror="this.src='${DEFAULT_IMAGE}'">
 
-            ${imgCount > 1 ? `
+            ${
+              imgCount > 1
+                ? `
               <button class="card-img-nav right"
                 onclick="event.stopPropagation(); cardNextImage('${p.id}')"
                 title="Nästa">›</button>
-            ` : ''}
+            `
+                : ''
+            }
 
           </div>
 
@@ -907,13 +1018,14 @@ async function renderProducts() {
           <div class="card-title">${escapeHtml(p.title)}</div>
           <div class="card-price">${p.price} kr</div>
           <div class="card-meta">
-            <span>📍 ${p.location}</span>
-            <span>${p.date}</span>
+            <span>📍 ${escapeHtml(p.location)}</span>
+            <span>${escapeHtml(p.date)}</span>
           </div>
         </div>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 }
 
 function setCat() {
@@ -924,7 +1036,7 @@ function setCat() {
 // PRODUCT MODAL
 // ===========================
 async function openProduct(id) {
-  currentProduct = products.find(p => String(p.id) === String(id));
+  currentProduct = products.find((p) => String(p.id) === String(id));
   if (!currentProduct) return;
 
   const hasMultiple = (currentProduct.images || []).length > 1;
@@ -935,8 +1047,7 @@ async function openProduct(id) {
 
   document.getElementById('modalTitle').textContent = currentProduct.title;
   document.getElementById('modalPrice').textContent = currentProduct.price + ' kr';
-  document.getElementById('modalMeta').textContent =
-    `${currentProduct.location} • ${currentProduct.date} • ${currentProduct.category}`;
+  document.getElementById('modalMeta').textContent = `${currentProduct.location} • ${currentProduct.date} • ${currentProduct.category}`;
   document.getElementById('modalDesc').textContent = currentProduct.description || 'Ingen beskrivning.';
   document.getElementById('modalSellerName').textContent = currentProduct.seller;
   document.getElementById('modalSellerAvatar').textContent = (currentProduct.seller || '??').substring(0, 2).toUpperCase();
@@ -947,13 +1058,17 @@ async function openProduct(id) {
   if (thumbsDiv) thumbsDiv.classList.toggle('hidden', !hasMultiple);
 
   if (hasMultiple) {
-    thumbsDiv.innerHTML = currentProduct.images.map((img, i) => `
+    thumbsDiv.innerHTML = currentProduct.images
+      .map(
+        (img, i) => `
       <img src="${img}"
            style="width:60px;height:60px;object-fit:cover;border-radius:8px;
                   cursor:pointer;border:2px solid transparent;flex-shrink:0;"
            onclick="selectImage(${i})"
            onerror="this.style.display='none'">
-    `).join('');
+    `
+      )
+      .join('');
   } else {
     thumbsDiv.innerHTML = '';
   }
@@ -961,7 +1076,9 @@ async function openProduct(id) {
   updateModalImage();
   updateArrowState();
 
-  document.getElementById('modalImg').onerror = function () { this.src = DEFAULT_IMAGE; };
+  document.getElementById('modalImg').onerror = function () {
+    this.src = DEFAULT_IMAGE;
+  };
 
   // status
   const statusDiv = document.getElementById('modalStatus');
@@ -970,9 +1087,13 @@ async function openProduct(id) {
   } else if (currentProduct.status === 'pending') {
     statusDiv.innerHTML = '<span class="status-badge-small status-pending">VÄNTAR PÅ GRANSKNING</span>';
   } else if (currentProduct.status === 'rejected') {
-    const reason = currentProduct.rejected_reason ? escapeHtml(currentProduct.rejected_reason) : 'Ingen anledning angiven';
-    statusDiv.innerHTML = `<span class="status-badge-small" style="background:#fee2e2;color:#991b1b;">AVVISAD</span>
-      <div style="margin-top:8px; font-size:13px; color:#991b1b;">${reason}</div>`;
+    const reason = currentProduct.rejected_reason
+      ? escapeHtml(currentProduct.rejected_reason)
+      : 'Ingen anledning angiven';
+    statusDiv.innerHTML = `
+      <span class="status-badge-small" style="background:#fee2e2;color:#991b1b;">AVVISAD</span>
+      <div style="margin-top:8px; font-size:13px; color:#991b1b;">${reason}</div>
+    `;
   } else {
     statusDiv.innerHTML = '<span class="status-badge-small status-active">AKTIV</span>';
   }
@@ -981,7 +1102,7 @@ async function openProduct(id) {
   const isSold = currentProduct.status === 'sold';
 
   const contactBtn = document.getElementById('btnContact');
-  contactBtn.style.display = (isOwner || isSold) ? 'none' : 'inline-flex';
+  contactBtn.style.display = isOwner || isSold ? 'none' : 'inline-flex';
 
   document.getElementById('ownerActions').classList.toggle('hidden', !isOwner);
 
@@ -999,45 +1120,50 @@ async function openProduct(id) {
 // ===========================
 async function switchTab(tab, btn) {
   currentProfileTab = tab;
-  document.querySelectorAll('#pageProfile .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#pageProfile .tab-btn').forEach((b) => b.classList.remove('active'));
   btn.classList.add('active');
 
   const content = document.getElementById('tabContent');
 
   if (tab === 'active') {
-    const myProducts = products.filter(p =>
-      String(p.sellerId) === String(currentUser.id) &&
-      ['active', 'pending', 'rejected'].includes(p.status)
+    const myProducts = products.filter(
+      (p) =>
+        String(p.sellerId) === String(currentUser.id) &&
+        ['active', 'pending', 'rejected'].includes(p.status)
     );
 
     if (myProducts.length === 0) {
-      content.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">Du har inga aktiva annonser</div>';
+      content.innerHTML =
+        '<div style="text-align: center; padding: 40px; color: #64748b;">Du har inga aktiva annonser</div>';
       return;
     }
-    content.innerHTML = myProducts.map(p => renderProductItem(p, 'active')).join('');
-  }
-
-  else if (tab === 'history') {
-    const history = products.filter(p => String(p.sellerId) === String(currentUser.id) && p.status === 'sold');
+    content.innerHTML = myProducts.map((p) => renderProductItem(p, 'active')).join('');
+  } else if (tab === 'history') {
+    const history = products.filter(
+      (p) => String(p.sellerId) === String(currentUser.id) && p.status === 'sold'
+    );
     if (history.length === 0) {
-      content.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">Ingen historik</div>';
+      content.innerHTML =
+        '<div style="text-align: center; padding: 40px; color: #64748b;">Ingen historik</div>';
       return;
     }
-    content.innerHTML = history.map(p => renderProductItem(p, 'history')).join('');
-  }
-
-  else if (tab === 'favorites') {
+    content.innerHTML = history.map((p) => renderProductItem(p, 'history')).join('');
+  } else if (tab === 'favorites') {
     const favIds = Array.from(localFavorites);
     if (favIds.length === 0) {
-      content.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">Inga favoriter sparade</div>';
+      content.innerHTML =
+        '<div style="text-align: center; padding: 40px; color: #64748b;">Inga favoriter sparade</div>';
       return;
     }
-    const favProducts = products.filter(p => favIds.includes(String(p.id)) && p.status === 'active');
+    const favProducts = products.filter(
+      (p) => favIds.includes(String(p.id)) && p.status === 'active'
+    );
     if (favProducts.length === 0) {
-      content.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">Dina favoriter är inte längre tillgängliga</div>';
+      content.innerHTML =
+        '<div style="text-align: center; padding: 40px; color: #64748b;">Dina favoriter är inte längre tillgängliga</div>';
       return;
     }
-    content.innerHTML = favProducts.map(p => renderProductItem(p, 'favorite')).join('');
+    content.innerHTML = favProducts.map((p) => renderProductItem(p, 'favorite')).join('');
   }
 }
 
@@ -1046,16 +1172,15 @@ function renderProductItem(p, type) {
   const isPending = p.status === 'pending';
   const isRejected = p.status === 'rejected';
 
-  const statusBadge =
-    isSold
-      ? '<span class="badge-sold">SÅLD</span>'
-      : isPending
-        ? '<span class="status-badge-small status-pending">VÄNTAR</span>'
-        : isRejected
-          ? '<span class="status-badge-small" style="background:#fee2e2;color:#991b1b;">AVVISAD</span>'
-          : '';
+  const statusBadge = isSold
+    ? '<span class="badge-sold">SÅLD</span>'
+    : isPending
+    ? '<span class="status-badge-small status-pending">VÄNTAR</span>'
+    : isRejected
+    ? '<span class="status-badge-small" style="background:#fee2e2;color:#991b1b;">AVVISAD</span>'
+    : '';
 
-  const imgUrl = (p.images && p.images.length) ? p.images[0] : DEFAULT_IMAGE;
+  const imgUrl = p.images?.[0] || DEFAULT_IMAGE;
 
   let actionsHtml = '';
 
@@ -1069,18 +1194,17 @@ function renderProductItem(p, type) {
         </button>
       </div>
     `;
-  }
-
-  else if (type === 'active') {
+  } else if (type === 'active') {
     actionsHtml = `
       <div class="item-actions" onclick="event.stopPropagation()">
-        ${(!isPending && !isRejected)
-        ? `<button class="btn btn-success" onclick="event.stopPropagation(); quickSold('${p.id}')">✓ Såld</button>`
-        : ''}
 
-        ${isRejected
-        ? `<button class="btn btn-warning" onclick="event.stopPropagation(); resubmitProduct('${p.id}')">🔁 Skicka igen</button>`
-        : ''}
+        ${!isPending && !isRejected ? `<button class="btn btn-success" onclick="event.stopPropagation(); quickSold('${p.id}')">✓ Såld</button>` : ''}
+
+        ${
+          isRejected
+            ? `<button class="btn btn-warning" onclick="event.stopPropagation(); resubmitProduct('${p.id}')">🔁 Skicka igen</button>`
+            : ''
+        }
 
         <button class="btn btn-danger" onclick="event.stopPropagation(); prepDelete('${p.id}')">
           🗑️ Ta bort annons permanent
@@ -1090,15 +1214,14 @@ function renderProductItem(p, type) {
 
     // Visa anledning inline om rejected
     if (isRejected && p.rejected_reason) {
-      actionsHtml = `
+      actionsHtml =
+        `
         <div style="margin-top:8px; font-size:13px; color:#991b1b;">
           <b>Anledning:</b> ${escapeHtml(p.rejected_reason)}
         </div>
       ` + actionsHtml;
     }
-  }
-
-  else if (type === 'history') {
+  } else if (type === 'history') {
     actionsHtml = `
       <div class="item-actions" onclick="event.stopPropagation()">
         <button class="btn btn-success" onclick="event.stopPropagation(); quickSold('${p.id}')">↩ Ångra såld</button>
@@ -1113,7 +1236,7 @@ function renderProductItem(p, type) {
         <div class="item-title" style="${isSold ? 'text-decoration: line-through;' : ''}">
           ${escapeHtml(p.title)} ${statusBadge}
         </div>
-        <div class="item-meta">${p.price} kr • ${p.location}</div>
+        <div class="item-meta">${p.price} kr • ${escapeHtml(p.location)}</div>
         ${actionsHtml}
       </div>
     </div>
@@ -1125,7 +1248,7 @@ function renderProductItem(p, type) {
 // ===========================
 async function quickSold(id, e) {
   if (e) e.stopPropagation();
-  const p = products.find(x => String(x.id) === String(id));
+  const p = products.find((x) => String(x.id) === String(id));
   if (!p) return;
 
   try {
@@ -1139,14 +1262,14 @@ async function quickSold(id, e) {
 
     updateChatBadge();
     showToast(newStatus === 'sold' ? 'Markerad som såld' : 'Återaktiverad');
-  } catch (e2) {
+  } catch {
     showToast('Kunde inte uppdatera');
   }
 }
 
 function prepDelete(id) {
   event.stopPropagation();
-  currentProduct = products.find(x => String(x.id) === String(id));
+  currentProduct = products.find((x) => String(x.id) === String(id));
   if (currentProduct) showModal('deleteModal');
 }
 
@@ -1165,13 +1288,17 @@ async function confirmDelete() {
       const activeBtn = document.querySelector('#pageProfile .tab-btn.active');
       if (activeBtn) switchTab(currentProfileTab, activeBtn);
     }
-  } catch (e) {
+  } catch {
     showToast('Kunde inte ta bort annonsen');
   }
 }
 
 function openSellModal() {
-  if (!currentUser) { showToast('Logga in för att sälja'); openAuth(); return; }
+  if (!currentUser) {
+    showToast('Logga in för att sälja');
+    openAuth();
+    return;
+  }
   tempImages = [];
   document.getElementById('sellTitleInput').value = '';
   document.getElementById('sellPrice').value = '';
@@ -1179,7 +1306,7 @@ function openSellModal() {
   document.getElementById('editId').value = '';
   document.getElementById('sellTitle').textContent = 'Ny annons';
   document.getElementById('imagePreviewGrid').innerHTML = '';
-  document.getElementById('pendingNotice').classList.toggle('hidden', !currentUser.isAdmin);
+  document.getElementById('pendingNotice')?.classList.toggle('hidden', !!currentUser.isAdmin);
   showModal('sellModal');
 }
 
@@ -1200,7 +1327,7 @@ async function previewImages(input) {
   }
 
   try {
-    const promises = filesToProcess.map(file => {
+    const promises = filesToProcess.map((file) => {
       return new Promise((resolve, reject) => {
         if (file.size > 2 * 1024 * 1024) {
           reject(new Error(`${file.name} är för stor (max 2MB)`));
@@ -1230,12 +1357,16 @@ function renderImagePreviews() {
     return;
   }
 
-  grid.innerHTML = tempImages.map((img, i) => `
-    <div class="img-preview">
-      <img src="${img}">
-      <button type="button" class="remove-img" onclick="removeImage(${i})">✕</button>
-    </div>
-  `).join('');
+  grid.innerHTML = tempImages
+    .map(
+      (img, i) => `
+      <div class="img-preview">
+        <img src="${img}">
+        <button type="button" class="remove-img" onclick="removeImage(${i})">✕</button>
+      </div>
+    `
+    )
+    .join('');
 }
 
 function removeImage(idx) {
@@ -1264,13 +1395,16 @@ async function submitProduct() {
 
   try {
     if (editId) {
-      await updateProductInSupabase(editId, {
-        title, price, category: cat, location: loc, description: desc
-      }, uniqueImages);
+      await updateProductInSupabase(
+        editId,
+        { title, price, category: cat, location: loc, description: desc },
+        uniqueImages
+      );
       showToast('Annons uppdaterad!');
     } else {
-      // ✅ Ny: om inte admin => pending + visible=false
       const isAdmin = !!currentUser.isAdmin;
+
+      // ✅ Ny: non-admin => pending + visible=false
       const newProduct = {
         title,
         price,
@@ -1280,7 +1414,7 @@ async function submitProduct() {
         seller: currentUser.name,
         sellerId: currentUser.id,
         status: isAdmin ? 'active' : 'pending',
-        visible: isAdmin ? true : false
+        visible: isAdmin ? true : false,
       };
 
       const imagesToSave = uniqueImages.length > 0 ? uniqueImages : [DEFAULT_IMAGE];
@@ -1294,7 +1428,6 @@ async function submitProduct() {
     updateChatBadge();
     if (currentUser?.isAdmin) await updateAdminBadgesDb();
     closeModal('sellModal');
-
   } catch (e) {
     console.error('Sparfel:', e);
     showToast('Kunde inte spara: ' + e.message);
@@ -1312,9 +1445,9 @@ function editProduct() {
   document.getElementById('sellLoc').value = currentProduct.location;
   document.getElementById('sellDesc').value = currentProduct.description || '';
   document.getElementById('editId').value = currentProduct.id;
-  document.getElementById('pendingNotice').classList.add('hidden');
+  document.getElementById('pendingNotice')?.classList.add('hidden');
 
-  tempImages = [...new Set((currentProduct.images || []).filter(img => img !== DEFAULT_IMAGE))];
+  tempImages = [...new Set((currentProduct.images || []).filter((img) => img !== DEFAULT_IMAGE))];
   renderImagePreviews();
 
   showModal('sellModal');
@@ -1330,7 +1463,7 @@ async function markSold() {
     updateChatBadge();
     showToast(newStatus === 'sold' ? 'Markerad som såld' : 'Återaktiverad');
     closeModal('productModal');
-  } catch (e) {
+  } catch {
     showToast('Kunde inte uppdatera status');
   }
 }
@@ -1341,26 +1474,39 @@ function deleteProduct() {
 }
 
 // ===========================
-// REJECT / RESUBMIT
+// REJECT / RESUBMIT (seller)
 // ===========================
 async function resubmitProduct(id) {
   if (!currentUser) return;
 
   try {
-    const p = products.find(x => String(x.id) === String(id));
+    const p = products.find((x) => String(x.id) === String(id));
     if (!p || String(p.sellerId) !== String(currentUser.id)) return;
+
+    const now = new Date().toISOString();
 
     const { error } = await sb
       .from('products')
       .update({
         status: 'pending',
         visible: false,
-        resubmitted_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        resubmitted_at: now,
+        updated_at: now,
       })
       .eq('id', id);
 
     if (error) throw error;
+
+    // logg (valfritt men nice för admin-history)
+    try {
+      await adminLogModeration({
+        productId: id,
+        action: 'resubmit',
+        reason: null,
+      });
+    } catch (e) {
+      console.warn('resubmit log failed:', e);
+    }
 
     await loadProducts();
     renderProducts();
@@ -1390,14 +1536,14 @@ async function submitForgotPassword() {
   if (!email) return;
   try {
     const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + window.location.pathname
+      redirectTo: window.location.origin + window.location.pathname,
     });
     if (error) showToast(error.message);
     else {
       showToast('Återställningslänk skickad! Kolla din e-post.');
       closeModal('forgotPasswordModal');
     }
-  } catch (e) {
+  } catch {
     showToast('Kunde inte skicka återställningslänk');
   }
 }
@@ -1417,9 +1563,9 @@ async function updateChatBadge() {
     if (error) throw error;
 
     let totalUnread = 0;
-    for (const conv of (convs || [])) {
+    for (const conv of convs || []) {
       const isBuyer = String(conv.buyer_id) === String(currentUser.id);
-      const unreadCount = isBuyer ? (conv.buyer_unread || 0) : (conv.seller_unread || 0);
+      const unreadCount = isBuyer ? conv.buyer_unread || 0 : conv.seller_unread || 0;
       totalUnread += unreadCount;
     }
 
@@ -1434,7 +1580,7 @@ async function updateChatBadge() {
       badge.classList.add('hidden');
     }
   } catch (e) {
-    console.error("Kunde inte uppdatera badge:", e);
+    console.error('Kunde inte uppdatera badge:', e);
   }
 }
 
@@ -1442,7 +1588,10 @@ async function updateChatBadge() {
 // CHAT
 // ===========================
 async function openChat() {
-  if (!currentUser) { showToast('Logga in för att chatta'); return; }
+  if (!currentUser) {
+    showToast('Logga in för att chatta');
+    return;
+  }
 
   document.getElementById('chatPanel').classList.add('show');
   document.getElementById('chatOverlay').classList.add('show');
@@ -1484,7 +1633,7 @@ async function loadConversationsDb() {
 
     if (error) throw error;
 
-    const visible = (convs || []).filter(c => {
+    const visible = (convs || []).filter((c) => {
       const isBuyer = String(c.buyer_id) === String(currentUser.id);
       const isSeller = String(c.seller_id) === String(currentUser.id);
       if (isBuyer && c.buyer_deleted === true) return false;
@@ -1493,7 +1642,8 @@ async function loadConversationsDb() {
     });
 
     if (visible.length === 0) {
-      list.innerHTML = '<div style="padding: 20px; text-align: center; color: #64748b;">Inga konversationer än</div>';
+      list.innerHTML =
+        '<div style="padding: 20px; text-align: center; color: #64748b;">Inga konversationer än</div>';
       return;
     }
 
@@ -1504,11 +1654,13 @@ async function loadConversationsDb() {
       let otherName = await getDisplayName(otherId);
       if (!otherName) otherName = 'Okänd användare';
 
-      const prod = products.find(p => String(p.id) === String(c.product_id));
+      const prod = products.find((p) => String(p.id) === String(c.product_id));
       enriched.push({ ...c, otherId, otherName, productTitle: prod?.title || null });
     }
 
-    list.innerHTML = enriched.map(c => `
+    list.innerHTML = enriched
+      .map(
+        (c) => `
       <div class="chat-conv" data-id="${String(c.id)}">
         <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #ec4899); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; flex-shrink:0;">
           ${(c.otherName || '??').substring(0, 2).toUpperCase()}
@@ -1518,19 +1670,36 @@ async function loadConversationsDb() {
           <div style="font-size: 14px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
             ${escapeHtml(c.last_message || 'Inga meddelanden')}
           </div>
-          ${c.productTitle ? `<div style="font-size: 12px; color: var(--primary); margin-top: 2px;">📦 ${escapeHtml(c.productTitle.substring(0, 30))}${c.productTitle.length > 30 ? '...' : ''}</div>` : ''}
+          ${
+            c.productTitle
+              ? `<div style="font-size: 12px; color: var(--primary); margin-top: 2px;">📦 ${escapeHtml(
+                  c.productTitle.substring(0, 30)
+                )}${c.productTitle.length > 30 ? '...' : ''}</div>`
+              : ''
+          }
         </div>
-        <button class="delete-conv" onclick="event.stopPropagation(); deleteConversationFromList('${String(c.id)}')" title="Ta bort">🗑️</button>
+        <button class="delete-conv" onclick="event.stopPropagation(); deleteConversationFromList('${String(
+          c.id
+        )}')" title="Ta bort">🗑️</button>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   } catch (e) {
-    console.error("Fel i loadConversationsDb:", e);
-    list.innerHTML = '<div style="padding: 20px; color:#ef4444;">Kunde inte ladda konversationer</div>';
+    console.error('Fel i loadConversationsDb:', e);
+    list.innerHTML =
+      '<div style="padding: 20px; color:#ef4444;">Kunde inte ladda konversationer</div>';
   }
 }
 
 async function deleteConversationFromList(conversationId) {
-  if (!currentUser || !confirm('Radera denna konversation? Den kommer att försvinna från din lista, men den andra parten behåller sin kopia.')) return;
+  if (
+    !currentUser ||
+    !confirm(
+      'Radera denna konversation? Den kommer att försvinna från din lista, men den andra parten behåller sin kopia.'
+    )
+  )
+    return;
 
   try {
     const convIdNum = Number(conversationId);
@@ -1542,15 +1711,15 @@ async function deleteConversationFromList(conversationId) {
       .maybeSingle();
 
     if (convErr) throw convErr;
-    if (!conv) { showToast('Konversationen finns inte'); return; }
+    if (!conv) {
+      showToast('Konversationen finns inte');
+      return;
+    }
 
     const isBuyer = String(currentUser.id) === String(conv.buyer_id);
     const update = isBuyer ? { buyer_deleted: true } : { seller_deleted: true };
 
-    const { error: updErr } = await sb
-      .from('conversations')
-      .update(update)
-      .eq('id', convIdNum);
+    const { error: updErr } = await sb.from('conversations').update(update).eq('id', convIdNum);
 
     if (updErr) throw updErr;
 
@@ -1566,8 +1735,8 @@ async function deleteConversationFromList(conversationId) {
 async function openConversationDb(conversationId) {
   if (!currentUser) return;
 
-  if (conversationId == null || conversationId === "null" || conversationId === "undefined") {
-    showToast("Kunde inte öppna chatten (saknar ID)");
+  if (conversationId == null || conversationId === 'null' || conversationId === 'undefined') {
+    showToast('Kunde inte öppna chatten (saknar ID)');
     return;
   }
 
@@ -1585,26 +1754,35 @@ async function openConversationDb(conversationId) {
       .maybeSingle();
 
     if (error) throw error;
-    if (!conv) { showToast('Konversationen finns inte längre'); return; }
+    if (!conv) {
+      showToast('Konversationen finns inte längre');
+      return;
+    }
 
     const isBuyer = String(conv.buyer_id) === String(currentUser.id);
     const isSeller = String(conv.seller_id) === String(currentUser.id);
 
-    if (isBuyer && conv.buyer_deleted === true) { showToast('Du har tagit bort denna konversation'); return; }
-    if (isSeller && conv.seller_deleted === true) { showToast('Du har tagit bort denna konversation'); return; }
+    if (isBuyer && conv.buyer_deleted === true) {
+      showToast('Du har tagit bort denna konversation');
+      return;
+    }
+    if (isSeller && conv.seller_deleted === true) {
+      showToast('Du har tagit bort denna konversation');
+      return;
+    }
 
     currentChatId = String(conv.id);
 
     const otherId = isBuyer ? conv.seller_id : conv.buyer_id;
     let otherName = await getDisplayName(otherId);
-    if (!otherName) otherName = isBuyer ? "Säljare" : "Köpare";
+    if (!otherName) otherName = isBuyer ? 'Säljare' : 'Köpare';
 
     currentChat = {
       id: conv.id,
       otherId,
       otherName,
       isBuyer,
-      productId: conv.product_id
+      productId: conv.product_id,
     };
 
     document.getElementById('chatConversation').classList.remove('hidden');
@@ -1617,26 +1795,26 @@ async function openConversationDb(conversationId) {
       setTimeout(() => msgInput.focus(), 100);
     }
 
-    const prod = products.find(p => String(p.id) === String(conv.product_id));
+    const prod = products.find((p) => String(p.id) === String(conv.product_id));
     if (prod) {
-      document.getElementById('chatProductImg').src = (prod.images && prod.images[0]) ? prod.images[0] : DEFAULT_IMAGE;
+      document.getElementById('chatProductImg').src = prod.images?.[0] || DEFAULT_IMAGE;
       document.getElementById('chatProductTitle').textContent = prod.title || '--';
-      document.getElementById('chatProductPrice').textContent = (prod.price != null) ? (prod.price + ' kr') : '';
+      document.getElementById('chatProductPrice').textContent =
+        prod.price != null ? prod.price + ' kr' : '';
       document.getElementById('chatProductInfo').classList.remove('hidden');
     } else {
       document.getElementById('chatProductInfo').classList.add('hidden');
     }
 
-    document.querySelectorAll('.chat-conv').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.chat-conv').forEach((el) => el.classList.remove('active'));
     const activeEl = document.querySelector(`.chat-conv[data-id="${String(conv.id)}"]`);
     if (activeEl) activeEl.classList.add('active');
 
     await loadMessagesDb(String(conv.id));
     subscribeToMessages(String(conv.id));
     await markConversationAsRead(conv.id);
-
   } catch (e) {
-    console.error("Fel i openConversationDb:", e);
+    console.error('Fel i openConversationDb:', e);
     showToast('Kunde inte öppna chatten');
   }
 }
@@ -1656,15 +1834,12 @@ async function markConversationAsRead(conversationId) {
     const isBuyer = String(conv.buyer_id) === String(currentUser.id);
     const updateField = isBuyer ? 'buyer_unread' : 'seller_unread';
 
-    const { error } = await sb
-      .from('conversations')
-      .update({ [updateField]: 0 })
-      .eq('id', conversationId);
+    const { error } = await sb.from('conversations').update({ [updateField]: 0 }).eq('id', conversationId);
 
     if (error) throw error;
     await updateChatBadge();
   } catch (e) {
-    console.error("Kunde inte markera som läst:", e);
+    console.error('Kunde inte markera som läst:', e);
   }
 }
 
@@ -1682,32 +1857,54 @@ async function loadMessagesDb(conversationId) {
     if (error) throw error;
 
     if (!msgs || msgs.length === 0) {
-      container.innerHTML = '<div style="text-align: center; color: #64748b; margin-top: 40px;">Skriv första meddelandet</div>';
+      container.innerHTML =
+        '<div style="text-align: center; color: #64748b; margin-top: 40px;">Skriv första meddelandet</div>';
       return;
     }
 
-    container.innerHTML = msgs.map(m => `
+    container.innerHTML = msgs
+      .map(
+        (m) => `
       <div class="msg ${String(m.sender_id) === String(currentUser.id) ? 'sent' : 'received'}">
         ${escapeHtml(m.body)}
-        <div class="msg-time">${m.created_at ? new Date(m.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) : ''}</div>
+        <div class="msg-time">${
+          m.created_at
+            ? new Date(m.created_at).toLocaleTimeString('sv-SE', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : ''
+        }</div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
 
     container.scrollTop = container.scrollHeight;
   } catch (e) {
-    console.error("Fel i loadMessagesDb:", e);
-    container.innerHTML = '<div style="text-align:center; color:#ef4444; margin-top:40px;">Kunde inte ladda meddelanden</div>';
+    console.error('Fel i loadMessagesDb:', e);
+    container.innerHTML =
+      '<div style="text-align:center; color:#ef4444; margin-top:40px;">Kunde inte ladda meddelanden</div>';
   }
 }
 
 async function sendMessage() {
   const input = document.getElementById('msgInput');
-  if (!input) { showToast('Fel: Chattfältet saknas'); return; }
+  if (!input) {
+    showToast('Fel: Chattfältet saknas');
+    return;
+  }
   const text = input.value.trim();
 
   if (!text) return;
-  if (!currentChatId) { showToast('Fel: Ingen aktiv konversation'); return; }
-  if (!currentUser) { showToast('Fel: Du måste vara inloggad'); return; }
+  if (!currentChatId) {
+    showToast('Fel: Ingen aktiv konversation');
+    return;
+  }
+  if (!currentUser) {
+    showToast('Fel: Du måste vara inloggad');
+    return;
+  }
 
   try {
     const { data: conv, error: convFetchErr } = await sb
@@ -1729,21 +1926,21 @@ async function sendMessage() {
       .eq('id', Number(currentChatId));
     if (unreadErr) throw unreadErr;
 
-    const { error: msgErr } = await sb
-      .from('messages')
-      .insert([{
+    const { error: msgErr } = await sb.from('messages').insert([
+      {
         conversation_id: Number(currentChatId),
         sender_id: currentUser.id,
         body: text,
-        created_at: new Date().toISOString()
-      }]);
+        created_at: new Date().toISOString(),
+      },
+    ]);
     if (msgErr) throw msgErr;
 
     const { error: convErr } = await sb
       .from('conversations')
       .update({
         last_message: text,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', Number(currentChatId));
     if (convErr) throw convErr;
@@ -1753,20 +1950,15 @@ async function sendMessage() {
     await loadMessagesDb(currentChatId);
     await loadConversationsDb();
     await updateChatBadge();
-
   } catch (e) {
-    console.error("Fel i sendMessage:", e);
+    console.error('Fel i sendMessage:', e);
     showToast('Kunde inte skicka: ' + (e.message || 'okänt fel'));
   }
 }
 
 async function getDisplayName(userId) {
   try {
-    const { data, error } = await sb
-      .from('profiles')
-      .select('name')
-      .eq('id', userId)
-      .maybeSingle();
+    const { data, error } = await sb.from('profiles').select('name').eq('id', userId).maybeSingle();
     if (error) return null;
     return data?.name || null;
   } catch {
@@ -1778,7 +1970,7 @@ function cleanupChatRealtime() {
   try {
     if (msgChannel && sb) sb.removeChannel(msgChannel);
   } catch (e) {
-    console.error("Fel vid cleanup:", e);
+    console.error('Fel vid cleanup:', e);
   }
   msgChannel = null;
 }
@@ -1827,11 +2019,7 @@ async function deleteCurrentChat() {
     const isBuyer = String(currentUser.id) === String(conv.buyer_id);
     const update = isBuyer ? { buyer_deleted: true } : { seller_deleted: true };
 
-    const { error: updErr } = await sb
-      .from('conversations')
-      .update(update)
-      .eq('id', convIdNum);
-
+    const { error: updErr } = await sb.from('conversations').update(update).eq('id', convIdNum);
     if (updErr) throw updErr;
 
     document.getElementById('chatConversation').classList.add('hidden');
@@ -1851,7 +2039,10 @@ async function deleteCurrentChat() {
 // CONTACT SELLER
 // ===========================
 async function contactSeller() {
-  if (!currentUser) { showToast('Logga in först'); return; }
+  if (!currentUser) {
+    showToast('Logga in först');
+    return;
+  }
   if (!currentProduct) return;
 
   if (String(currentProduct.sellerId) === String(currentUser.id)) {
@@ -1876,30 +2067,32 @@ async function contactSeller() {
       const now = new Date().toISOString();
       const { data: created, error: createErr } = await sb
         .from('conversations')
-        .insert([{
-          product_id: currentProduct.id,
-          buyer_id: currentUser.id,
-          seller_id: currentProduct.sellerId,
-          last_message: 'Hej! Jag är intresserad av din annons.',
-          created_at: now,
-          updated_at: now,
-          buyer_deleted: false,
-          seller_deleted: false
-        }])
+        .insert([
+          {
+            product_id: currentProduct.id,
+            buyer_id: currentUser.id,
+            seller_id: currentProduct.sellerId,
+            last_message: 'Hej! Jag är intresserad av din annons.',
+            created_at: now,
+            updated_at: now,
+            buyer_deleted: false,
+            seller_deleted: false,
+          },
+        ])
         .select()
         .single();
 
       if (createErr) throw createErr;
       conv = created;
 
-      const { error: msgErr } = await sb
-        .from('messages')
-        .insert([{
+      const { error: msgErr } = await sb.from('messages').insert([
+        {
           conversation_id: conv.id,
           sender_id: currentUser.id,
           body: 'Hej! Jag är intresserad av din annons.',
-          created_at: now
-        }]);
+          created_at: now,
+        },
+      ]);
       if (msgErr) throw msgErr;
     } else {
       const isBuyer = String(conv.buyer_id) === String(currentUser.id);
@@ -1907,11 +2100,7 @@ async function contactSeller() {
 
       if (wasDeletedByMe) {
         const update = isBuyer ? { buyer_deleted: false } : { seller_deleted: false };
-        const { error: restoreErr } = await sb
-          .from('conversations')
-          .update(update)
-          .eq('id', conv.id);
-
+        const { error: restoreErr } = await sb.from('conversations').update(update).eq('id', conv.id);
         if (restoreErr) throw restoreErr;
         showToast('Konversation återställd');
       }
@@ -1922,9 +2111,8 @@ async function contactSeller() {
     setTimeout(async () => {
       await openConversationDb(conv.id);
     }, 300);
-
   } catch (e) {
-    console.error("Fel i contactSeller:", e);
+    console.error('Fel i contactSeller:', e);
     showToast('Kunde inte starta chat: ' + (e.message || 'okänt fel'));
   }
 }
@@ -1933,29 +2121,43 @@ async function contactSeller() {
 // REPORTS (DB)
 // ===========================
 function openReport() {
-  if (!currentUser) { showToast('Logga in för att anmäla'); return; }
+  if (!currentUser) {
+    showToast('Logga in för att anmäla');
+    return;
+  }
   document.getElementById('reportReason').value = 'Bedrägeri';
   document.getElementById('reportDetails').value = '';
   showModal('reportModal');
 }
 
 async function submitReport() {
-  if (!currentUser) { showToast('Logga in för att anmäla'); return; }
-  if (!currentProduct) { showToast('Ingen annons vald'); return; }
-  if (!sb) { showToast('Databasen är inte ansluten'); return; }
+  if (!currentUser) {
+    showToast('Logga in för att anmäla');
+    return;
+  }
+  if (!currentProduct) {
+    showToast('Ingen annons vald');
+    return;
+  }
+  if (!sb) {
+    showToast('Databasen är inte ansluten');
+    return;
+  }
 
   const reason = document.getElementById('reportReason').value;
   const details = document.getElementById('reportDetails').value?.trim() || null;
 
   try {
-    const { error } = await sb.from('reports').insert([{
-      type: 'product',
-      product_id: Number(currentProduct.id),
-      reporter_id: currentUser.id,
-      reason,
-      details,
-      status: 'pending'
-    }]);
+    const { error } = await sb.from('reports').insert([
+      {
+        type: 'product',
+        product_id: Number(currentProduct.id),
+        reporter_id: currentUser.id,
+        reason,
+        details,
+        status: 'pending',
+      },
+    ]);
 
     if (error) throw error;
 
@@ -1997,7 +2199,7 @@ async function dismissReportDb(reportId) {
       .update({
         status: 'dismissed',
         handled_by: currentUser.id,
-        handled_at: new Date().toISOString()
+        handled_at: new Date().toISOString(),
       })
       .eq('id', reportId);
 
@@ -2021,7 +2223,7 @@ async function resolveReportDb(reportId) {
       .update({
         status: 'resolved',
         handled_by: currentUser.id,
-        handled_at: new Date().toISOString()
+        handled_at: new Date().toISOString(),
       })
       .eq('id', reportId);
 
@@ -2040,27 +2242,34 @@ async function resolveReportDb(reportId) {
 async function updateAdminBadgesDb() {
   if (!currentUser?.isAdmin || !sb) return;
 
-  const pending = products.filter(p => p.status === 'pending').length;
+  const pending = products.filter((p) => p.status === 'pending').length;
 
   const { count, error } = await sb
     .from('reports')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'pending');
 
-  const rep = error ? 0 : (count || 0);
+  const rep = error ? 0 : count || 0;
 
-  document.getElementById('badgePending').textContent = pending;
-  document.getElementById('badgePending').classList.toggle('hidden', pending === 0);
+  const bPending = document.getElementById('badgePending');
+  const bReports = document.getElementById('badgeReports');
 
-  document.getElementById('badgeReports').textContent = rep;
-  document.getElementById('badgeReports').classList.toggle('hidden', rep === 0);
+  if (bPending) {
+    bPending.textContent = pending;
+    bPending.classList.toggle('hidden', pending === 0);
+  }
+
+  if (bReports) {
+    bReports.textContent = rep;
+    bReports.classList.toggle('hidden', rep === 0);
+  }
 }
 
 // ===========================
 // ADMIN UI
 // ===========================
 function setAdminTab(tab, element) {
-  document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach((el) => el.classList.remove('active'));
   element.classList.add('active');
   renderAdminContent(tab);
 }
@@ -2069,10 +2278,10 @@ async function renderAdminContent(tab) {
   const content = document.getElementById('adminContent');
 
   if (tab === 'overview') {
-    const activeAds = products.filter(p => p.status === 'active').length;
-    const pendingAds = products.filter(p => p.status === 'pending').length;
-    const rejectedAds = products.filter(p => p.status === 'rejected').length;
-    const soldAds = products.filter(p => p.status === 'sold').length;
+    const activeAds = products.filter((p) => p.status === 'active').length;
+    const pendingAds = products.filter((p) => p.status === 'pending').length;
+    const rejectedAds = products.filter((p) => p.status === 'rejected').length;
+    const soldAds = products.filter((p) => p.status === 'sold').length;
 
     content.innerHTML = `
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
@@ -2099,16 +2308,19 @@ async function renderAdminContent(tab) {
   }
 
   if (tab === 'pending') {
-    const pending = products.filter(p => p.status === 'pending');
+    const pending = products.filter((p) => p.status === 'pending');
 
     if (pending.length === 0) {
-      content.innerHTML = '<div class="panel" style="padding: 40px; text-align: center; color: #64748b;">Inga annonser väntar på granskning</div>';
+      content.innerHTML =
+        '<div class="panel" style="padding: 40px; text-align: center; color: #64748b;">Inga annonser väntar på granskning</div>';
+      await updateAdminBadgesDb();
       return;
     }
 
-    content.innerHTML = pending.map(p => {
-      const img = (p.images && p.images.length) ? p.images[0] : DEFAULT_IMAGE;
-      return `
+    content.innerHTML = pending
+      .map((p) => {
+        const img = p.images?.[0] || DEFAULT_IMAGE;
+        return `
         <div class="panel" style="margin-bottom: 12px; overflow: hidden;">
           <div style="display: flex; gap: 16px; padding: 16px; flex-wrap: wrap;">
             <img src="${img}" style="width: 100px; height: 75px; object-fit: cover; border-radius: 8px; flex-shrink: 0;" onerror="this.src='${DEFAULT_IMAGE}'">
@@ -2124,7 +2336,8 @@ async function renderAdminContent(tab) {
           </div>
         </div>
       `;
-    }).join('');
+      })
+      .join('');
 
     await updateAdminBadgesDb();
     return;
@@ -2132,17 +2345,22 @@ async function renderAdminContent(tab) {
 
   if (tab === 'reports') {
     const dbReports = await fetchReportsFromDb();
-    const pendingReports = dbReports.filter(r => r.status === 'pending');
+    const pendingReports = dbReports.filter((r) => r.status === 'pending');
 
     if (pendingReports.length === 0) {
-      content.innerHTML = '<div class="panel" style="padding: 40px; text-align: center; color: #64748b;">Inga nya anmälningar</div>';
+      content.innerHTML =
+        '<div class="panel" style="padding: 40px; text-align: center; color: #64748b;">Inga nya anmälningar</div>';
       await updateAdminBadgesDb();
       return;
     }
 
-    content.innerHTML = pendingReports.map(r => {
-      const prod = r.product_id ? products.find(p => String(p.id) === String(r.product_id)) : null;
-      return `
+    content.innerHTML = pendingReports
+      .map((r) => {
+        const prod = r.product_id
+          ? products.find((p) => String(p.id) === String(r.product_id))
+          : null;
+
+        return `
         <div class="panel" style="margin-bottom: 12px; padding: 16px; border-left: 4px solid #f59e0b;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
             <div>
@@ -2151,7 +2369,7 @@ async function renderAdminContent(tab) {
               </span>
               <div style="font-weight:700; margin-top:8px;">${escapeHtml(r.reason)}</div>
               <div style="color:#64748b; font-size:14px;">
-                Mål: ${escapeHtml(prod?.title || (r.product_id ? ('Produkt #' + r.product_id) : '—'))}
+                Mål: ${escapeHtml(prod?.title || (r.product_id ? 'Produkt #' + r.product_id : '—'))}
               </div>
               ${r.details ? `<div style="margin-top:8px; font-size:14px; color:#64748b;">${escapeHtml(r.details)}</div>` : ''}
               <div style="margin-top:8px; font-size:12px; color:#94a3b8;">
@@ -2166,18 +2384,16 @@ async function renderAdminContent(tab) {
           </div>
         </div>
       `;
-    }).join('');
+      })
+      .join('');
 
     await updateAdminBadgesDb();
     return;
   }
 
-    else if (tab === 'history') {
-    // Bygger historik från din "products" array (som redan kommer från DB)
-    // Visar active/pending/rejected/sold med filter + sök
+  if (tab === 'history') {
     const all = (products || []).slice();
 
-    // Default-sort: senaste händelse först (updatedAt om finns, annars createdAt)
     all.sort((a, b) => {
       const ta = new Date(a.updatedAt || a.createdAt || 0).getTime();
       const tb = new Date(b.updatedAt || b.createdAt || 0).getTime();
@@ -2216,10 +2432,10 @@ async function renderAdminContent(tab) {
 
       let list = all;
 
-      if (st) list = list.filter(p => (p.status || '') === st);
+      if (st) list = list.filter((p) => (p.status || '') === st);
 
       if (q) {
-        list = list.filter(p => {
+        list = list.filter((p) => {
           const title = (p.title || '').toLowerCase();
           const seller = (p.seller || '').toLowerCase();
           const loc = (p.location || '').toLowerCase();
@@ -2237,11 +2453,13 @@ async function renderAdminContent(tab) {
         return;
       }
 
-      listEl.innerHTML = list.map(p => {
-        const img = (p.images && p.images.length) ? p.images[0] : DEFAULT_IMAGE;
+      listEl.innerHTML = list
+        .map((p) => {
+          const img = p.images?.[0] || DEFAULT_IMAGE;
 
-        const rejectedMeta = (p.status === 'rejected')
-          ? `
+          const rejectedMeta =
+            p.status === 'rejected'
+              ? `
             <div style="margin-top:8px; font-size:13px; color:#991b1b;">
               <b>Anledning:</b> ${escapeHtml(p.rejected_reason || '—')}
               <div style="margin-top:4px; color:#64748b;">
@@ -2253,16 +2471,16 @@ async function renderAdminContent(tab) {
               ${p.resubmitted_at ? `<div style="margin-top:4px; color:#64748b;"><b>Resubmitted:</b> ${formatDateTimeSv(p.resubmitted_at)}</div>` : ''}
             </div>
           `
-          : '';
+              : '';
 
-        const timeline = `
+          const timeline = `
           <div style="margin-top:8px; font-size:12px; color:#94a3b8;">
             <b>Skapad:</b> ${formatDateTimeSv(p.createdAt)}
             ${p.updatedAt ? ` • <b>Uppdaterad:</b> ${formatDateTimeSv(p.updatedAt)}` : ''}
           </div>
         `;
 
-        return `
+          return `
           <div class="panel" style="margin-bottom:12px; overflow:hidden;">
             <div style="display:flex; gap:16px; padding:16px; flex-wrap:wrap;">
               <img src="${img}"
@@ -2291,17 +2509,19 @@ async function renderAdminContent(tab) {
             <div style="display:flex; gap:8px; padding:0 16px 16px; flex-wrap:wrap;">
               <button class="btn btn-soft" onclick="openProduct('${p.id}')">Öppna</button>
 
-              ${p.status === 'pending'
-                ? `
+              ${
+                p.status === 'pending'
+                  ? `
                   <button class="btn btn-success" onclick="approveProduct('${p.id}')">✓ Godkänn</button>
                   <button class="btn btn-danger" onclick="rejectProduct('${p.id}')">✕ Avvisa</button>
                 `
-                : ''
+                  : ''
               }
             </div>
           </div>
         `;
-      }).join('');
+        })
+        .join('');
     }
 
     searchEl.addEventListener('input', renderHistoryRows);
@@ -2310,14 +2530,13 @@ async function renderAdminContent(tab) {
     document.getElementById('adminHistRefresh').addEventListener('click', async () => {
       await loadProducts();
       await updateAdminBadgesDb();
-      // re-render tab igen (för att använda ny products-array)
       renderAdminContent('history');
     });
 
     renderHistoryRows();
     await updateAdminBadgesDb();
+    return;
   }
-
 
   if (tab === 'users') {
     content.innerHTML = '<div style="text-align: center; color: #64748b;">Användarhantering visas här</div>';
@@ -2325,7 +2544,7 @@ async function renderAdminContent(tab) {
   }
 }
 
-// ✅ nya approve/reject wrappers (kopplade till module)
+// ✅ approve/reject wrappers (kopplade till module)
 async function approveProduct(id) {
   try {
     await adminApproveProduct(id);
@@ -2386,7 +2605,7 @@ function closeModal(id) {
 }
 
 function closeAllModals() {
-  ['authModal', 'sellModal', 'productModal', 'reportModal', 'deleteModal', 'forgotPasswordModal'].forEach(id => {
+  ['authModal', 'sellModal', 'productModal', 'reportModal', 'deleteModal', 'forgotPasswordModal'].forEach((id) => {
     const modal = document.getElementById(id);
     if (modal && modal.classList.contains('show')) closeModal(id);
   });
@@ -2404,9 +2623,7 @@ function showToast(message) {
 
 function escapeHtml(text) {
   if (!text) return '';
-  return text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ===========================
@@ -2431,11 +2648,7 @@ async function fetchUnreadNotifications() {
 
 async function markNotificationsRead(ids) {
   if (!currentUser || !ids?.length) return;
-  const { error } = await sb
-    .from('notifications')
-    .update({ is_read: true })
-    .in('id', ids);
-
+  const { error } = await sb.from('notifications').update({ is_read: true }).in('id', ids);
   if (error) console.error('markNotificationsRead error:', error);
 }
 
@@ -2493,11 +2706,11 @@ function selectImage(i) {
 
 // swipe
 let touchStartX = 0;
-document.addEventListener('touchstart', e => {
+document.addEventListener('touchstart', (e) => {
   if (!document.getElementById('productModal')?.classList.contains('show')) return;
   touchStartX = e.changedTouches[0].screenX;
 });
-document.addEventListener('touchend', e => {
+document.addEventListener('touchend', (e) => {
   if (!document.getElementById('productModal')?.classList.contains('show')) return;
   const endX = e.changedTouches[0].screenX;
   const diff = endX - touchStartX;
@@ -2511,7 +2724,7 @@ document.addEventListener('touchend', e => {
 // CARD IMAGE NAV
 // ===========================
 function updateCardArrowState(productId) {
-  const p = products.find(x => String(x.id) === String(productId));
+  const p = products.find((x) => String(x.id) === String(productId));
   if (!p?.images || p.images.length <= 1) return;
 
   const idx = cardImageIndex[productId] ?? 0;
@@ -2539,7 +2752,7 @@ function updateCardArrowState(productId) {
 }
 
 function updateCardImage(productId) {
-  const p = products.find(x => String(x.id) === String(productId));
+  const p = products.find((x) => String(x.id) === String(productId));
   if (!p) return;
 
   const idx = cardImageIndex[productId] ?? 0;
@@ -2550,7 +2763,7 @@ function updateCardImage(productId) {
 }
 
 function cardNextImage(productId) {
-  const p = products.find(x => String(x.id) === String(productId));
+  const p = products.find((x) => String(x.id) === String(productId));
   if (!p?.images || p.images.length <= 1) return;
 
   const idx = cardImageIndex[productId] ?? 0;
@@ -2564,7 +2777,7 @@ function cardNextImage(productId) {
 }
 
 function cardPrevImage(productId) {
-  const p = products.find(x => String(x.id) === String(productId));
+  const p = products.find((x) => String(x.id) === String(productId));
   if (!p?.images || p.images.length <= 1) return;
 
   const idx = cardImageIndex[productId] ?? 0;
@@ -2578,7 +2791,7 @@ function cardPrevImage(productId) {
 }
 
 // ===========================
-// PLACEHOLDERS
+// PLACEHOLDERS (behåller dina)
 // ===========================
 function reportFromChat() {
   showToast('Anmälningsfunktion från chat ej implementerad');
