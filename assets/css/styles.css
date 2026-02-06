@@ -1774,5 +1774,146 @@ textarea:focus {
 }
 
 
+/* =========================
+   PRODUCT MODAL – MOBILE VERSION (FULLSCREEN + 1 COLUMN)
+   Lägg LÄNGST NER i CSS
+========================= */
+
+@media (max-width: 768px) {
+  /* Fullscreen-känsla */
+  #productModal.modal {
+    padding: 0 !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+  }
+
+  #productModal .modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Header sticky */
+  #productModal .modal-head {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
+    padding: 14px 14px !important;
+  }
+
+  /* Gör layouten 1 kolumn */
+  #productModal .product-modal-body {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 14px !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Bild större och snygg */
+  #productModal .modal-image-wrapper {
+    aspect-ratio: 4 / 3 !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+
+  /* Thumbnails blir horisontell “rail” */
+  #modalThumbs {
+    display: flex !important;
+    gap: 10px !important;
+    overflow-x: auto !important;
+    padding-bottom: 6px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  #modalThumbs img {
+    width: 68px !important;
+    height: 68px !important;
+    border-radius: 12px !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* Typografi: inte för stort på mobil (du har inline-stilar i HTML) */
+  #productModal #modalTitle {
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+    margin: 6px 0 !important;
+  }
+
+  #productModal #modalPrice {
+    font-size: 22px !important;
+    margin-top: 6px !important;
+  }
+
+  #productModal #modalMeta {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    margin: 10px 0 !important;
+    word-break: break-word !important;
+  }
+
+  #productModal #modalDesc {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Säljare-raden: mindre padding */
+  #productModal #modalSellerAvatar {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 16px !important;
+  }
+
+  /* Knappar: snygg rad som wrappar */
+  #productModal #modalActions {
+    gap: 8px !important;
+  }
+
+  #productModal #modalActions .btn {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    min-height: 44px !important;
+  }
+
+  /* Ägare-actions får bättre spacing */
+  #productModal #ownerActions {
+    margin-top: 14px !important;
+    padding-top: 14px !important;
+  }
+}
+
+/* =========================
+   FIX: Scroll i ProductModal på mobil
+   Lägg LÄNGST NER i CSS (under mobile product modal blocket)
+========================= */
+
+@media (max-width: 768px) {
+  /* Gör boxen till en “container” med header + scrollbar body */
+  #productModal .modal-box {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important; /* behåll, men nu scrollar body istället */
+  }
+
+  /* Själva innehållet ska scrolla */
+  #productModal .modal-body.product-modal-body {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    min-height: 0 !important; /* viktigt i flex för att scroll ska funka */
+  }
+
+  /* (valfritt) om du vill att thumbnails aldrig “fastnar” */
+  #modalThumbs {
+    overscroll-behavior-x: contain !important;
+  }
+}
+
+
+
+
 
 

@@ -28,6 +28,7 @@ let products = [];
 let currentProfileTab = 'active';
 let localFavorites = new Set();
 let selectedCats = new Set();
+let __modalZ = 3000;
 
 // === Scroll lock (förhindrar hopp när modaler öppnas/stängs) ===
 let __scrollY = 0;
@@ -795,8 +796,9 @@ async function refreshFavoritesCache() {
 
 async function toggleFav(id, event) {
   if (event) event.stopPropagation();
-  if (!currentUser) {
+   if (!currentUser) {
     showToast('Logga in för att spara favoriter');
+    openAuth();                 // ✅ öppna login-modalen
     return;
   }
 
@@ -2085,6 +2087,7 @@ async function deleteCurrentChat() {
 async function contactSeller() {
   if (!currentUser) {
     showToast('Logga in först');
+    openAuth();                 // ✅ öppna login-modalen
     return;
   }
   if (!currentProduct) return;
@@ -2167,6 +2170,7 @@ async function contactSeller() {
 function openReport() {
   if (!currentUser) {
     showToast('Logga in för att anmäla');
+    openAuth();                 // ✅ öppna login-modalen
     return;
   }
   document.getElementById('reportReason').value = 'Bedrägeri';
@@ -2629,10 +2633,16 @@ function rejectProduct(id) {
 function showModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
+
+  // ✅ säkerställ att senaste modal alltid ligger överst
+  __modalZ += 1;
+  modal.style.zIndex = String(__modalZ);
+
   modal.classList.add('show');
   modal.style.display = 'flex';
   lockBodyScroll();
 }
+
 
 function closeModal(id) {
   const modal = document.getElementById(id);
