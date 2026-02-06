@@ -193,49 +193,80 @@ async function adminLogModeration({ productId, action, reason = null }) {
 }
 
 async function adminApproveProduct(productId) {
-  if (!currentUser?.isAdmin) throw new Error('Endast admin');
-
-  // 1) Hämta produkt för notis
-  const { data: prod, error: pErr } = await sb
-    .from('products')
-    .select('id, seller_id, title')
-    .eq('id', productId)
-    .single();
-
-  if (pErr) throw pErr;
-
-  // 2) approve => active + visible=true
-  const { error } = await sb
-    .from('products')
-    .update({
-      status: 'active',
-      visible: true,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', productId);
-
-  if (error) throw error;
-
-  // 3) logg
-  await adminLogModeration({ productId, action: 'approve', reason: null });
-
-  // 4) notis (valfri men rekommenderad)
-  if (prod?.seller_id) {
-    try {
-      await adminNotifyUser({
-        userId: prod.seller_id,
-        type: 'product_approved',
-        title: 'Din annons är godkänd',
-        body: `Annons: ${prod.title}\nStatus: Godkänd och publicerad.`,
-        productId: prod.id,
-      });
-    } catch (e) {
-      console.warn('approve notify failed:', e);
-    }
+  if (!currentUser?.isAdmin) {
+    throw new Error('Endast admin');
   }
 
-  return true;
+  try {
+    // 1) Hämta produkt (för notis + säkerhet)
+    const { data: prod, error: pErr } = await sb
+      .from('products')
+      .select('id, seller_id, title')
+      .eq('id', productId)
+      .single();
+
+    if (pErr || !prod) {
+      throw pErr || new Error('Produkten hittades inte');
+    }
+
+    const now = new Date().toISOString();
+
+    // 2) Uppdatera produkt: godkänn + metadata
+    const { error: uErr } = await sb
+      .from('products')
+      .update({
+        status: 'active',
+        visible: true,
+
+        // ✅ approve-metadata
+        approved_at: now,
+        approved_by: currentUser.id,
+
+        // ✅ rensa ev. gammal reject-data
+        rejected_reason: null,
+        rejected_at: null,
+        rejected_by: null,
+
+        updated_at: now,
+      })
+      .eq('id', productId);
+
+    if (uErr) throw uErr;
+
+    // 3) Moderation-logg
+    try {
+      await adminLogModeration({
+        productId: prod.id,
+        action: 'approve',
+        reason: null,
+      });
+    } catch (e) {
+      console.warn('Moderation-logg misslyckades:', e);
+    }
+
+    // 4) Skicka notis till säljare
+    if (prod.seller_id) {
+      try {
+        await adminNotifyUser({
+          userId: prod.seller_id,
+          type: 'product_approved',
+          title: 'Din annons är godkänd',
+          body: `Annons: ${prod.title}\nStatus: Godkänd och publicerad.`,
+          productId: prod.id,
+        });
+      } catch (e) {
+        console.warn('Approve-notis misslyckades:', e);
+      }
+    }
+
+    return true;
+
+  } catch (err) {
+    console.error('adminApproveProduct error:', err);
+    throw err;
+  }
 }
+
 
 async function adminRejectProduct(productId, reason) {
   if (!currentUser?.isAdmin) throw new Error('Inte behörig');
@@ -484,18 +515,21 @@ async function fetchProductsFromSupabase() {
 }
 
 async function createProductInSupabase(product, imageUrls) {
-  const payload = {
-    title: product.title,
-    price: product.price,
-    category: product.category,
-    location: product.location,
-    description: product.description,
-    seller: product.seller,
-    seller_id: product.sellerId,
-    status: product.status,
-    visible: product.visible,
-    updated_at: new Date().toISOString(),
-  };
+ const payload = {
+  title: product.title,
+  price: product.price,
+  category: product.category,
+  location: product.location,
+  description: product.description,
+  seller: product.seller,
+  seller_id: product.sellerId,
+  status: product.status,
+  visible: product.visible,
+
+  created_at: new Date().toISOString(), // 👈 LÄGG TILL
+  updated_at: new Date().toISOString(),
+};
+
 
   const { data: created, error: pErr } = await sb
     .from('products')
@@ -548,26 +582,56 @@ async function updateProductInSupabase(productId, updates, imageUrls) {
 }
 
 async function deleteProductFromSupabase(productId) {
-  const { error } = await sb.from('products').delete().eq('id', productId);
+  const patch = {
+    deleted_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    visible: false,
+    status: 'deleted', // valfritt men bra för admin/history
+  };
+
+  const { error } = await sb
+    .from('products')
+    .update(patch)
+    .eq('id', productId);
+
   if (error) throw error;
   return true;
 }
 
+
 async function updateProductStatus(productId, status) {
+  // Bygg update-objekt
+  const patch = {
+    status,
+    updated_at: new Date().toISOString(),
+  };
+
+  // Sätt / ta bort sold_at
+  if (status === 'sold') {
+    patch.sold_at = new Date().toISOString();
+  } else {
+    patch.sold_at = null; // om man ångrar såld
+  }
+
+  // Försök uppdatera
   const { error } = await sb
     .from('products')
-    .update({ status: status, updated_at: new Date().toISOString() })
+    .update(patch)
     .eq('id', productId);
 
   if (error) {
-    // fallback (om updated_at saknas i schema)
+    console.error('updateProductStatus error:', error);
+
+    // Fallback om kolumner saknas
     const { error: err2 } = await sb
       .from('products')
-      .update({ status: status })
+      .update({ status })
       .eq('id', productId);
+
     if (err2) throw err2;
   }
 }
+
 
 async function checkSupabaseSession() {
   if (!sb) return;
