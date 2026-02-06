@@ -117,53 +117,68 @@
   </div>
 
   <div id="pageProfile" class="page">
-    <div class="container">
-      <button class="btn btn-soft" onclick="showHome()" style="margin-bottom: 20px;">← Tillbaka</button>
+  <div class="container">
+    <button class="btn btn-soft" onclick="showHome()" style="margin-bottom: 20px;">← Tillbaka</button>
 
-      <div class="profile-grid">
-        <div class="panel">
-          <div class="panel-header" style="height: 100px; position: relative;">
-            <div style="position: absolute; bottom: -40px; left: 20px;">
-              <div
-                style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #ec4899); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 800; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"
-                id="pAvatar">??</div>
-            </div>
-          </div>
-          <div class="panel-body" style="padding-top: 50px;">
-            <div style="font-weight: 800; font-size: 20px;" id="pName">--</div>
-            <div style="color: #64748b; margin-bottom: 20px;" id="pEmail">--</div>
-
-            <div class="stat-grid">
-              <div class="stat-box">
-                <div class="stat-num" id="statAds">0</div>
-                <div class="stat-label">Annonser</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-num" id="statChats">0</div>
-                <div class="stat-label">Chattar</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-num" id="statFavs">0</div>
-                <div class="stat-label">Favoriter</div>
-              </div>
-            </div>
-
-            <button class="btn btn-primary" style="width: 100%;" onclick="openSellModal()">+ Ny annons</button>
+    <div class="profile-grid">
+      <div class="panel">
+        <div class="panel-header" style="height: 100px; position: relative;">
+          <div style="position: absolute; bottom: -40px; left: 20px;">
+            <div
+              style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #ec4899); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 800; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"
+              id="pAvatar">??</div>
           </div>
         </div>
 
-        <div>
-          <div class="tab-bar">
-            <button class="tab-btn active" onclick="switchTab('active', this)">Aktiva</button>
-            <button class="tab-btn" onclick="switchTab('history', this)">Historik</button>
-            <button class="tab-btn" onclick="switchTab('favorites', this)">Favoriter</button>
+        <div class="panel-body" style="padding-top: 50px;">
+          <div style="font-weight: 800; font-size: 20px;" id="pName">--</div>
+          <div style="color: #64748b; margin-bottom: 20px;" id="pEmail">--</div>
+
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="stat-num" id="statAds">0</div>
+              <div class="stat-label">Annonser</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num" id="statChats">0</div>
+              <div class="stat-label">Chattar</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num" id="statFavs">0</div>
+              <div class="stat-label">Favoriter</div>
+            </div>
           </div>
 
-          <div id="tabContent"></div>
+          <button class="btn btn-primary" style="width: 100%;" onclick="openSellModal()">+ Ny annons</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab('active', this)">Aktiva</button>
+          <button class="tab-btn" onclick="switchTab('history', this)">Historik</button>
+          <button class="tab-btn" onclick="switchTab('favorites', this)">Favoriter</button>
+        </div>
+
+        <div id="tabContent"></div>
+
+        <!-- ✅ NOTISER (läggs under tabContent) -->
+        <div class="panel" style="padding:16px; margin-top:12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="font-weight:800;">🔔 Notiser</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-soft" onclick="refreshNotifications()">Uppdatera</button>
+              <button class="btn btn-soft" onclick="markAllNotificationsRead()">Markera alla som lästa</button>
+            </div>
+          </div>
+
+          <div id="notificationsList" style="margin-top:12px;"></div>
         </div>
       </div>
     </div>
   </div>
+</div>
+
 
   <div id="pageAdmin" class="page">
     <div class="container">
@@ -444,8 +459,8 @@
   <!-- Chat -->
   <div id="chatOverlay" class="chat-overlay"></div>
   <div id="chatPanel" class="chat-panel">
-    <div style="display: flex; height: 100%;">
-      <div style="width: 100%; display: flex; flex-direction: column;">
+    <div class="chat-inner">
+      <div class="chat-list-wrapper">
         <div class="chat-header">
           <h3 style="margin: 0;">💬 Meddelanden</h3>
           <button class="close-btn" onclick="closeChat()">✕</button>

@@ -719,6 +719,7 @@ function showProfile() {
   switchTab('active', document.querySelector('#pageProfile .tab-btn'));
   document.getElementById('userMenu')?.classList.add('hidden');
   updateChatBadge();
+  refreshNotifications();
   window.scrollTo(0, 0);
 }
 
@@ -2652,6 +2653,114 @@ async function markNotificationsRead(ids) {
   if (error) console.error('markNotificationsRead error:', error);
 }
 
+async function fetchNotifications(limit = 30) {
+  if (!currentUser || !sb) return [];
+
+  const { data, error } = await sb
+    .from('notifications')
+    .select('id, created_at, type, title, body, product_id, is_read')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('fetchNotifications error:', error);
+    return [];
+  }
+  return data || [];
+}
+
+function renderNotificationsList(list) {
+  const el = document.getElementById('notificationsList');
+  if (!el) return;
+
+  if (!list.length) {
+    el.innerHTML = `<div style="text-align:center; color:#64748b; padding:20px;">
+      Inga notiser än.
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(n => {
+    const created = n.created_at ? new Date(n.created_at).toLocaleString('sv-SE') : '';
+    const unreadBadge = !n.is_read
+      ? `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:800;">OLÄST</span>`
+      : `<span style="background:#e2e8f0;color:#0f172a;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;">LÄST</span>`;
+
+    const productBtn = n.product_id
+      ? `<button class="btn btn-soft" onclick="openProduct('${String(n.product_id)}')">Öppna annons</button>`
+      : '';
+
+    const markBtn = !n.is_read
+      ? `<button class="btn btn-soft" onclick="markOneNotificationRead(${n.id})">Markera som läst</button>`
+      : '';
+
+    return `
+      <div class="panel" style="padding:12px; margin-bottom:10px; border-left:4px solid ${n.is_read ? '#e2e8f0' : '#ef4444'};">
+        <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <div style="font-weight:800;">${escapeHtml(n.title || 'Notis')}</div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            ${unreadBadge}
+            <div style="color:#94a3b8; font-size:12px;">${escapeHtml(created)}</div>
+          </div>
+        </div>
+
+        ${n.body ? `<div style="margin-top:8px; color:#334155; font-size:14px; white-space:pre-line;">${escapeHtml(n.body)}</div>` : ''}
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+          ${productBtn}
+          ${markBtn}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function refreshNotifications() {
+  if (!currentUser) return;
+   renderNotificationsLoading(); // ← lägg till
+  const list = await fetchNotifications(30);
+  renderNotificationsList(list);
+}
+
+async function markOneNotificationRead(id) {
+  if (!currentUser) return;
+  try {
+    await markNotificationsRead([id]);
+    await refreshNotifications();
+  } catch (e) {
+    console.error(e);
+    showToast('Kunde inte markera som läst');
+  }
+}
+
+function renderNotificationsLoading() {
+  const el = document.getElementById('notificationsList');
+  if (el) {
+    el.innerHTML = '<div style="padding:20px;color:#64748b;">⏳ Laddar...</div>';
+  }
+}
+
+
+async function markAllNotificationsRead() {
+  if (!currentUser) return;
+  try {
+    const list = await fetchNotifications(50);
+    const unreadIds = list.filter(n => !n.is_read).map(n => n.id);
+    if (!unreadIds.length) {
+      showToast('Inga olästa notiser');
+      return;
+    }
+    await markNotificationsRead(unreadIds);
+    showToast('Markerade alla som lästa');
+    await refreshNotifications();
+  } catch (e) {
+    console.error(e);
+    showToast('Kunde inte markera alla');
+  }
+}
+
+
 // ===========================
 // PRODUCT MODAL IMAGES
 // ===========================
@@ -2876,3 +2985,6 @@ window.dismissReportDb = dismissReportDb;
 window.resolveReportDb = resolveReportDb;
 
 window.resubmitProduct = resubmitProduct;
+window.refreshNotifications = refreshNotifications;
+window.markAllNotificationsRead = markAllNotificationsRead;
+window.markOneNotificationRead = markOneNotificationRead;

@@ -1693,3 +1693,37 @@ textarea:focus {
   text-align: center;
 }
 
+/* === CHAT FIX === */
+
+.chat-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Chat list */
+#chatList {
+  width: 100%;
+  height: 100%;
+}
+
+/* Conversation overlay */
+#chatConversation {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+}
+
+.chat-list-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
