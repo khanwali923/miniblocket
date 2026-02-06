@@ -32,25 +32,41 @@ let __modalZ = 3000;
 
 // === Scroll lock (förhindrar hopp när modaler öppnas/stängs) ===
 let __scrollY = 0;
+let __bodyLocked = false;
 
 function lockBodyScroll() {
+  if (__bodyLocked) return;
+  __bodyLocked = true;
+
   __scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-  unlockBodyScroll._pageId = document.querySelector('.page.active')?.id || '';
-  document.body.style.overflow = 'hidden';
+
+  // iOS-säkert scroll-lock: fixera body istället för overflow:hidden
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${__scrollY}px`;
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.width = '100%';
+
+  // undvik layout-jump pga scrollbar (desktop)
   document.body.style.paddingRight =
     (window.innerWidth - document.documentElement.clientWidth) + 'px';
 }
 
 function unlockBodyScroll() {
-  document.body.style.overflow = '';
+  if (!__bodyLocked) return;
+  __bodyLocked = false;
+
+  // återställ
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.width = '';
   document.body.style.paddingRight = '';
 
-  const activePage = document.querySelector('.page.active')?.id || '';
-  if (unlockBodyScroll._pageId && unlockBodyScroll._pageId === activePage) {
-    window.scrollTo(0, __scrollY);
-  }
-  unlockBodyScroll._pageId = null;
+  window.scrollTo(0, __scrollY);
 }
+
 
 // === Bilder ===
 let currentImageIndex = 0;

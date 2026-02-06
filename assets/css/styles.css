@@ -1940,6 +1940,25 @@ textarea:focus {
 }
 
 
+/* ✅ iOS/Safari: modalens box ska vara den enda scroll-ytan */
+.modal-box {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  max-height: calc(100dvh - 40px);
+}
+
+/* iOS safe-area och stabil viewport */
+@supports (-webkit-touch-callout: none) {
+  .modal-box {
+    max-height: calc(
+      100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px
+    );
+  }
+}
+
+
+
 
 
 
