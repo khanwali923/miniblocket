@@ -117,6 +117,49 @@ async function adminNotifyUser({ userId, type, title, body, productId }) {
   if (error) throw error;
 }
 
+let __rejectProductId = null;
+
+function openRejectModal(productId) {
+  __rejectProductId = String(productId);
+  const input = document.getElementById('rejectReasonInput');
+  if (input) input.value = '';
+  showModal('rejectModal');
+
+  // focus efter animation
+  setTimeout(() => input?.focus(), 150);
+}
+
+function closeRejectModal() {
+  __rejectProductId = null;
+  closeModal('rejectModal');
+}
+
+async function confirmRejectModal() {
+  const reason = (document.getElementById('rejectReasonInput')?.value || '').trim();
+  if (!reason) {
+    showToast('Skriv en anledning');
+    return;
+  }
+  if (!__rejectProductId) {
+    showToast('Fel: saknar produkt-id');
+    return;
+  }
+
+  try {
+    await adminRejectProduct(__rejectProductId, reason);
+    await loadProducts();
+    renderProducts();
+    await updateAdminBadgesDb();
+    renderAdminContent('pending');
+    closeRejectModal();
+    showToast('Annons avvisad + notis skickad');
+  } catch (e) {
+    console.error('confirmRejectModal error:', e);
+    showToast('Kunde inte avvisa: ' + (e.message || 'okänt fel'));
+  }
+}
+
+
 async function adminLogModeration({ productId, action, reason = null }) {
   if (!sb) return;
   // Om tabellen inte finns: detta kan kasta. Vill du “soft-faila” så säg till.
@@ -2560,7 +2603,7 @@ async function approveProduct(id) {
   }
 }
 
-async function rejectProduct(id) {
+/*async function rejectProduct(id) {
   const reason = prompt('Ange anledning för avvisning:');
   if (!reason || !reason.trim()) return;
 
@@ -2575,6 +2618,9 @@ async function rejectProduct(id) {
     console.error('rejectProduct error:', e);
     showToast('Kunde inte avvisa: ' + (e.message || 'okänt fel'));
   }
+} */
+function rejectProduct(id) {
+  openRejectModal(id);
 }
 
 // ===========================
@@ -2988,3 +3034,7 @@ window.resubmitProduct = resubmitProduct;
 window.refreshNotifications = refreshNotifications;
 window.markAllNotificationsRead = markAllNotificationsRead;
 window.markOneNotificationRead = markOneNotificationRead;
+
+window.openRejectModal = openRejectModal;
+window.closeRejectModal = closeRejectModal;
+window.confirmRejectModal = confirmRejectModal;

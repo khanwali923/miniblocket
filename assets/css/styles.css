@@ -1725,5 +1725,54 @@ textarea:focus {
   flex-direction: column;
 }
 
+/* =========================
+   REJECT MODAL FIX (DARK UI)
+========================= */
+
+.reject-head {
+  background: linear-gradient(135deg, #7f1d1d, #991b1b);
+  color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.reject-head h3 {
+  color: #fff;
+}
+
+.reject-head .close-btn {
+  color: #fff;
+  opacity: 0.8;
+}
+
+.reject-head .close-btn:hover {
+  opacity: 1;
+}
+
+#rejectModal .modal-box {
+  background: #020617;
+  border: 1px solid #1e293b;
+}
+
+#rejectModal textarea {
+  background: #020617;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+}
+
+#rejectModal textarea::placeholder {
+  color: #94a3b8;
+}
+
+.reject-btn {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border: none;
+  color: #fff;
+}
+
+.reject-btn:hover {
+  filter: brightness(1.1);
+}
+
+
 
 

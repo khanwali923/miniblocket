@@ -456,6 +456,31 @@
     </div>
   </div>
 
+  <div id="rejectModal" class="modal" onclick="if(event.target === this) closeRejectModal()">
+  <div class="modal-box" style="max-width: 520px;">
+    <div class="modal-head reject-head">
+      <h3>✕ Avvisa annons</h3>
+      <button class="close-btn" onclick="closeRejectModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div style="margin-bottom:10px; color:#64748b; font-size:14px;">
+        Skriv en tydlig anledning. Den skickas som notis till säljaren.
+      </div>
+
+      <label style="font-weight:600; display:block; margin-bottom:6px;">Anledning *</label>
+      <textarea id="rejectReasonInput" rows="4" placeholder="Ex: Otillåtna bilder / saknar pris / fel kategori..."
+        style="width:100%;"></textarea>
+
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button type="button" class="btn btn-soft" style="flex:1;" onclick="closeRejectModal()">Avbryt</button>
+        <button type="button" class="btn btn-danger reject-btn" style="flex:1;" onclick="confirmRejectModal()">Avvisa</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
   <!-- Chat -->
   <div id="chatOverlay" class="chat-overlay"></div>
   <div id="chatPanel" class="chat-panel">
